@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menú de la Cafetería</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-50 min-h-screen flex flex-col">
+    <!-- Encabezado con barra de navegación -->
+    <header class="bg-blue-900 text-white p-4 shadow">
+        <h1 class="text-2xl font-bold mb-2">Menú de la Cafetería</h1>
+        <nav aria-label="Navegación principal">
+            <ul class="flex flex-wrap space-x-4">
+                <li><a href="index.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Inicio</a></li>
+                <li><a href="buscar-estudiante.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Buscar estudiante</a></li>
+                <li><a href="listado-estudiantes.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Listado de estudiantes</a></li>
+                <li><a href="anadir-estudiante.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Añadir estudiante</a></li>
+                <li><a href="filtros.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Filtrar estudiante</a></li>
+                <li><a href="configurar-almuerzo.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Configurar almuerzo</a></li>
+                <li><a href="comprar-almuerzo.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Comprar almuerzo</a></li>
+                <li><a href="app.js.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Almuerzos</a></li>
+                <li><a href="contacto.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Contacto</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="flex-grow container mx-auto p-4">
+        <div id="menu" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-blue-900 text-white text-center p-4">
+        <p>© 2025 Sistema de Almuerzos</p>
+    </footer>
+
+    <script>
+        fetch("https://www.themealdb.com/api/json/v1/1/search.php?s=chicken")
+            .then(respuesta => {
+                if (!respuesta.ok) {
+                    throw new Error('Error al cargar el menú');
+                }
+                return respuesta.json();
+            })
+            .then(datos => {
+                console.log("Menú recibido:", datos);
+                const contenedor = document.getElementById('menu');
+
+                if (!datos.meals) {
+                    contenedor.innerHTML = `<p class="text-red-600 font-bold">No se encontraron platos.</p>`;
+                    return;
+                }
+
+                datos.meals.forEach(plato => {
+                    const tarjeta = document.createElement('div');
+                    tarjeta.className = "bg-white rounded shadow p-4 text-center hover:shadow-lg transition";
+                    tarjeta.innerHTML = `
+                        <h3 class="text-lg font-semibold mb-2">${plato.strMeal}</h3>
+                        <img src="${plato.strMealThumb}" alt="${plato.strMeal}" class="mx-auto rounded mb-2 w-48 h-48 object-cover">
+                        <p class="text-gray-600">ID del plato: ${plato.idMeal}</p>
+                    `;
+                    contenedor.appendChild(tarjeta);
+                });
+            })
+            .catch(error => {
+                console.error("Hubo un problema:", error);
+                document.getElementById('menu').innerHTML =
+                    `<p class="text-red-600 font-bold">Error al cargar el menú.</p>`;
+            });
+    </script>
+</body>
+</html>
