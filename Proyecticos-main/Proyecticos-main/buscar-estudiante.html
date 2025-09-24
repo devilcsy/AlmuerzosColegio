@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Buscar estudiante</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="js/estudiantes.js" defer></script>
+</head>
+<body class="bg-blue-50 min-h-screen p-6">
+  <header class="bg-blue-900 text-white p-4 mb-6">
+    <h1 class="text-2xl font-bold">Plataforma de Almuerzos</h1>
+    <nav aria-label="Navegación principal" class="mt-2">
+      <ul class="flex flex-wrap space-x-4">
+        <li><a href="index.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Inicio</a></li>
+        <li><a href="buscar-estudiante.html" class="px-3 py-1 rounded bg-yellow-400 text-black font-semibold">Buscar estudiante</a></li>
+        <li><a href="listado-estudiantes.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Listado de estudiantes</a></li>
+        <li><a href="anadir-estudiante.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Añadir estudiante</a></li>
+        <li><a href="filtros.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Filtrar estudiante</a></li>
+        <li><a href="configurar-almuerzo.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Configurar almuerzo</a></li>
+        <li><a href="comprar-almuerzo.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Comprar almuerzo</a></li>
+        <li><a href="app.js.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Almuerzos</a></li>
+        <li><a href="contacto.html" class="px-3 py-1 rounded hover:bg-yellow-400 hover:text-black transition">Contacto</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="max-w-lg mx-auto">
+    <h2 class="text-xl font-semibold mb-4">Buscar estudiante</h2>
+
+    <form id="searchStudentForm" class="bg-white p-6 rounded shadow space-y-4">
+      <input id="searchName" class="w-full border p-2 rounded" placeholder="ID o nombre" required>
+      <button class="w-full bg-blue-900 text-yellow-400 py-2 rounded hover:bg-yellow-400 hover:text-black transition">Buscar</button>
+    </form>
+
+    <div id="searchResult" class="mt-4 bg-white p-4 rounded shadow"></div>
+  </main>
+</body>
+</html>
