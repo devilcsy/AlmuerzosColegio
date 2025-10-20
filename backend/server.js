@@ -18,7 +18,7 @@ connectDB();
 
 const app = express();
 
-// ✅ CONFIGURACIÓN CORS COMPLETA
+
 app.use(cors({
   origin: true, // Acepta cualquier origen
   credentials: true,
@@ -26,7 +26,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-// ✅ MANEJAR PREFLIGHT REQUESTS GLOBALMENTE
+
 app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -37,7 +37,7 @@ app.options('*', (req, res) => {
 // Middlewares
 app.use(express.json());
 
-// ✅ MIDDLEWARE CORS MANUAL PARA TODAS LAS RUTAS
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
