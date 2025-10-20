@@ -1,5 +1,16 @@
+// src/utils/auth.js - VERSIÓN ACTUALIZADA
 
-const API_URL = 'http://localhost:5000/api';
+// Configuración dinámica para API
+const getApiBase = () => {
+  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
+    return 'https://solid-space-chainsaw-4j9wq5x447j9h5x6p-5000.app.github.dev/api';
+  }
+  return 'http://localhost:5001/api';
+};
+
+const API_URL = getApiBase();
+
+console.log('✅ Auth.js using API URL:', API_URL);
 
 // Función principal para fetch
 export const apiFetch = async (endpoint, options = {}) => {
@@ -19,9 +30,11 @@ export const apiFetch = async (endpoint, options = {}) => {
   }
 
   try {
+    console.log('🔗 Auth fetch to:', `${API_URL}${endpoint}`);
     const response = await fetch(`${API_URL}${endpoint}`, config);
     return await response.json();
   } catch (error) {
+    console.error('❌ Auth fetch error:', error);
     return { 
       success: false, 
       message: 'Error de conexión con el servidor' 
@@ -29,6 +42,7 @@ export const apiFetch = async (endpoint, options = {}) => {
   }
 };
 
+// [MANTÉN TODO EL RESTO DEL CÓDIGO IGUAL]
 // Alias para compatibilidad - getUser es igual a getStoredUser
 export const getUser = () => {
   const userData = localStorage.getItem('userData');

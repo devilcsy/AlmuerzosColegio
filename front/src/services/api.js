@@ -1,6 +1,16 @@
-
 // services/api.js
-const API_BASE = 'http://localhost:5000/api';
+
+// Configuración dinámica para API - VERSIÓN CODESPACES
+const getApiBase = () => {
+  // Si estamos en Codespaces, usar la URL del puerto 5000
+  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
+    return 'https://solid-space-chainsaw-4j9wq5x447j9h5x6p-5000.app.github.dev/api';
+  }
+  // Si estamos en desarrollo local
+  return 'http://localhost:5001/api';
+};
+
+const API_BASE = getApiBase();
 
 // Función helper para hacer requests
 const makeRequest = async (endpoint, options = {}) => {
@@ -20,6 +30,8 @@ const makeRequest = async (endpoint, options = {}) => {
       config.body = JSON.stringify(config.body);
     }
 
+    console.log('Making request to:', `${API_BASE}${endpoint}`); // Para debug
+    
     const response = await fetch(`${API_BASE}${endpoint}`, config);
     
     if (!response.ok) {
@@ -36,6 +48,7 @@ const makeRequest = async (endpoint, options = {}) => {
   }
 };
 
+// [MANTÉN TODAS LAS DEMÁS FUNCIONES IGUAL]
 // Funciones para almuerzos
 const getLunches = async () => {
   return await makeRequest('/lunches');
