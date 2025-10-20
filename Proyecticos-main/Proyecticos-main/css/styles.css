@@ -1,0 +1,126 @@
+/* ----------- Estilos base ----------- */
+:root {
+  --color-primario: #003366;  /* Azul oscuro */
+  --color-secundario: #0055aa; /* Azul intermedio */
+  --color-acento: #ffcc00;    /* Amarillo */
+  --color-blanco: #ffffff;
+  --color-gris: #f5f5f5;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--color-gris);
+  color: var(--color-primario);
+  line-height: 1.6;
+}
+
+/* ----------- Header y navegación ----------- */
+header {
+  background-color: var(--color-primario);
+  color: var(--color-blanco);
+  padding: 1rem;
+}
+
+header .logo h1 {
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+nav {
+  margin-top: 0.5rem;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--color-blanco);
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  transition: background 0.3s ease;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  background-color: var(--color-acento);
+  color: var(--color-primario);
+}
+
+/* ----------- Sección login ----------- */
+.login-section {
+  max-width: 400px;
+  margin: 2rem auto;
+  background-color: var(--color-blanco);
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.login-section h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: var(--color-secundario);
+}
+
+.login-section label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.login-section input {
+  width: 100%;
+  padding: 0.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.login-section button {
+  width: 100%;
+  padding: 0.7rem;
+  background-color: var(--color-primario);
+  color: var(--color-blanco);
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.login-section button:hover {
+  background-color: var(--color-secundario);
+}
+
+/* ----------- Footer ----------- */
+footer {
+  background-color: var(--color-primario);
+  color: var(--color-blanco);
+  text-align: center;
+  padding: 1rem;
+  margin-top: 2rem;
+}
+
+/* ----------- Responsividad ----------- */
+@media (max-width: 768px) {
+  header .logo h1 {
+    font-size: 1.5rem;
+  }
+  .nav-links {
+    flex-direction: column;
+    align-items: center;
+  }
+}
