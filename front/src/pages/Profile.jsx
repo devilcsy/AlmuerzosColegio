@@ -1,26 +1,49 @@
-import React, { useEffect, useState } from 'react'
-import { apiFetch, getUser } from '../utils/auth'
+import React from 'react';
+import { getStoredUser } from '../utils/auth';
 
-export default function Profile(){
-  const current = getUser()
-  const [profile, setProfile] = useState(null)
-
-  useEffect(()=>{ fetchProfile() }, [])
-
-  async function fetchProfile(){
-    const res = await apiFetch(`/api/users/${current.id}`)
-    if (res.ok) setProfile(res.data)
-  }
-
-  if (!profile) return <div className="card">Cargando perfil...</div>
+const Profile = () => {
+  const user = getStoredUser();
 
   return (
-    <div className="card">
-      <h2>Perfil de usuario</h2>
-      <div><strong>Nombre:</strong> {profile.name}</div>
-      <div><strong>Documento:</strong> {profile.documento}</div>
-      <div><strong>Rol:</strong> {profile.role}</div>
-      <div><strong>Saldo:</strong> COP {profile.balance}</div>
+    <div style={{ padding: '2rem' }}>
+      <h1>Mi Perfil</h1>
+      
+      {user ? (
+        <div style={{ 
+          background: 'white', 
+          padding: '2rem', 
+          borderRadius: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          maxWidth: '500px'
+        }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <strong>Nombre:</strong> {user.name}
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <strong>Email:</strong> {user.email}
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <strong>Rol:</strong> {user.role}
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <strong>Saldo:</strong> ${user.balance || 0}
+          </div>
+          {user.studentId && (
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>ID Estudiante:</strong> {user.studentId}
+            </div>
+          )}
+          {user.department && (
+            <div style={{ marginBottom: '1rem' }}>
+              <strong>Departamento/Grado:</strong> {user.department}
+            </div>
+          )}
+        </div>
+      ) : (
+        <p>No se pudo cargar la información del perfil.</p>
+      )}
     </div>
-  )
-}
+  );
+};
+
+export default Profile;

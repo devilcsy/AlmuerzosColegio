@@ -1,37 +1,133 @@
-// Simple auth helpers using localStorage.
-// Assumption: backend will return a JSON with { token, user: { id, name, role } }
-// Role values used here: 'STUDENT', 'STAFF', 'ADMIN'
-const STORAGE_KEY = 'proyecto_colegio_auth'
 
-export function saveAuth(payload){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
-}
+const API_URL = 'http://localhost:5000/api';
 
-export function getAuth(){
-  const raw = localStorage.getItem(STORAGE_KEY)
-  return raw ? JSON.parse(raw) : null
-}
+// Función principal para fetch
+export const apiFetch = async (endpoint, options = {}) => {
+  const token = localStorage.getItem('token');
+  
+  const config = {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
+      ...options.headers,
+    },
+    ...options,
+  };
 
-export function getUser(){
-  const auth = getAuth()
-  return auth ? auth.user : null
-}
+  if (config.body && typeof config.body === 'object') {
+    config.body = JSON.stringify(config.body);
+  }
 
-export function logout(){
-  localStorage.removeItem(STORAGE_KEY)
-}
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, config);
+    return await response.json();
+  } catch (error) {
+    return { 
+      success: false, 
+      message: 'Error de conexión con el servidor' 
+    };
+  }
+};
 
-export function getApiUrl(){
-  return import.meta.env.VITE_API_URL || 'http://localhost:8080'
-}
+// Alias para compatibilidad - getUser es igual a getStoredUser
+export const getUser = () => {
+  const userData = localStorage.getItem('userData');
+  return userData ? JSON.parse(userData) : null;
+};
 
-export async function apiFetch(path, options = {}){
-  const url = getApiUrl() + path
-  const auth = getAuth()
-  const headers = options.headers || {}
-  if (auth && auth.token) headers['Authorization'] = 'Bearer ' + auth.token
-  headers['Content-Type'] = 'application/json'
-  const res = await fetch(url, {...options, headers})
-  const data = await res.json().catch(()=>null)
-  return { ok: res.ok, status: res.status, data }
-}
+// Funciones de autenticación
+export const authAPI = {
+  async login(email, password) {
+    return await apiFetch('/auth/login', {
+      method: 'POST',
+      body: { email, password }
+    });
+  },
+
+  async register(userData) {
+    return await apiFetch('/auth/register', {
+      method: 'POST',
+      body: userData
+    });
+  },
+
+  async getProfile() {
+    return await apiFetch('/auth/me');
+  },
+
+  async checkAuth() {
+    return await apiFetch('/auth/me');
+  }
+};
+
+// Funciones de usuario
+export const userAPI = {
+  async updateProfile(profileData) {
+    return await apiFetch('/users/profile', {
+      method: 'PUT',
+      body: profileData
+    });
+  },
+
+  async addBalance(amount) {
+    return await apiFetch('/users/balance', {
+      method: 'POST',
+      body: { amount }
+    });
+  },
+
+  async getAllUsers() {
+    return await apiFetch('/users/all');
+  }
+};
+
+// Funciones de compras
+export const purchasesAPI = {
+  async getUserPurchases() {
+    return await apiFetch('/purchases/my-purchases');
+  },
+
+  async getAllPurchases() {
+    return await apiFetch('/purchases/all');
+  },
+
+  async createPurchase(purchaseData) {
+    return await apiFetch('/purchases', {
+      method: 'POST',
+      body: purchaseData
+    });
+  }
+};
+
+// Helpers de almacenamiento
+export const saveAuthData = (token, user) => {
+  localStorage.setItem('token', token);
+  localStorage.setItem('userData', JSON.stringify(user));
+};
+
+export const clearAuthData = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('userData');
+};
+
+export const getStoredUser = () => {
+  const userData = localStorage.getItem('userData');
+  return userData ? JSON.parse(userData) : null;
+};
+
+export const getToken = () => {
+  return localStorage.getItem('token');
+};
+
+// Exportaciones para compatibilidad con componentes existentes
+export default {
+  apiFetch,
+  getUser,
+  getStoredUser,
+  getToken,
+  saveAuthData,
+  clearAuthData,
+  authAPI,
+  userAPI,
+  purchasesAPI
+};
