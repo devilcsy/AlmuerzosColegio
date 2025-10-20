@@ -1,4 +1,3 @@
-// src/utils/auth.js - VERSIÓN ACTUALIZADA
 
 // Configuración dinámica para API
 const getApiBase = () => {
@@ -10,7 +9,7 @@ const getApiBase = () => {
 
 const API_URL = getApiBase();
 
-console.log('✅ Auth.js using API URL:', API_URL);
+console.log(' Auth.js using API URL:', API_URL);
 
 // Función principal para fetch
 export const apiFetch = async (endpoint, options = {}) => {
