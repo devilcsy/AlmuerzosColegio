@@ -1,4 +1,4 @@
-// server.js - VERSIÓN COMPLETA CON CORS CORREGIDO
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
