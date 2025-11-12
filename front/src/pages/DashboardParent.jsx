@@ -1,3 +1,4 @@
+// DashboardParent.jsx
 import React, { useEffect, useState } from 'react';
 import { getStoredUser, parentAPI } from '../utils/auth';
 import api from '../services/api';
@@ -5,8 +6,8 @@ import api from '../services/api';
 const DashboardParent = () => {
   const [user, setUser] = useState(null);
   const [children, setChildren] = useState([]);
-  const [selectedChild, setSelectedChild] = useState(null);
-  const [childPurchases, setChildPurchases] = useState([]);
+  const [selectedProfile, setSelectedProfile] = useState(null);
+  const [purchases, setPurchases] = useState([]);
   const [availableLunches, setAvailableLunches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showBalanceModal, setShowBalanceModal] = useState(false);
@@ -15,6 +16,10 @@ const DashboardParent = () => {
   const [selectedLunch, setSelectedLunch] = useState(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [purchaseLoading, setPurchaseLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchResult, setSearchResult] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+
 
   useEffect(() => {
     loadDashboardData();
@@ -25,19 +30,19 @@ const DashboardParent = () => {
     setUser(storedUser);
 
     try {
-      // Cargar hijos del padre
+      // Obtener hijos
       const childrenData = await parentAPI.getMyChildren();
       if (childrenData.success && childrenData.children) {
         setChildren(childrenData.children);
-        if (childrenData.children.length > 0) {
-          setSelectedChild(childrenData.children[0]);
-        }
       }
 
-      // Cargar almuerzos disponibles
+      // Obtener almuerzos disponibles
       const lunchesData = await api.getAvailableLunches();
       setAvailableLunches(lunchesData.slice(0, 6) || []);
 
+      // Por defecto: mostrar al padre
+      setSelectedProfile({ ...storedUser, isParent: true });
+      await loadPurchases(storedUser._id, true);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     }
@@ -45,89 +50,112 @@ const DashboardParent = () => {
     setLoading(false);
   };
 
-  const loadChildPurchases = async (childId) => {
-    if (!childId) return;
-    
+  const loadPurchases = async (userId, isParent = false) => {
     try {
-      const purchasesData = await parentAPI.getChildPurchases(childId);
-      if (purchasesData.success) {
-        setChildPurchases(purchasesData.purchases?.slice(0, 5) || []);
+      const data = !isParent
+        ? await parentAPI.getChildPurchases(userId)
+        : await api.getUserPurchases(userId);
+
+      if (data.success) {
+        setPurchases(data.purchases?.slice(0, 5) || []);
+      } else {
+        setPurchases([]);
       }
     } catch (error) {
-      console.error('Error loading child purchases:', error);
+      console.error('Error loading purchases:', error);
     }
   };
 
   useEffect(() => {
-    if (selectedChild) {
-      loadChildPurchases(selectedChild._id);
+    if (selectedProfile) {
+      loadPurchases(selectedProfile._id, selectedProfile.isParent);
     }
-  }, [selectedChild]);
+  }, [selectedProfile]);
 
-  const handleAddBalance = async () => {
-    if (!selectedChild || !balanceAmount || balanceAmount <= 0) {
-      alert('Por favor selecciona un hijo y ingresa un monto válido');
-      return;
+  // === 🔧 Recargar saldo ===
+ const handleAddBalance = async () => {
+  if (!selectedProfile || balanceAmount <= 0) {
+    alert('Por favor ingresa un monto válido');
+    return;
+  }
+
+  setBalanceLoading(true);
+
+  try {
+    let result;
+
+    // Si el padre está recargando su propio saldo
+    if (selectedProfile.isParent) {
+      result = await api.addBalance(parseFloat(balanceAmount)); 
+    } 
+    // Si el padre está recargando el saldo de un hijo
+    else {
+      result = await parentAPI.rechargeChild(
+        selectedProfile._id, 
+        parseFloat(balanceAmount)
+      );
     }
 
-    setBalanceLoading(true);
-    const result = await parentAPI.rechargeChild(selectedChild._id, parseFloat(balanceAmount));
-    
     if (result.success) {
-      alert(`¡Saldo recargado exitosamente a ${selectedChild.name}! Nuevo saldo: $${result.balance}`);
+      alert(`¡Saldo recargado exitosamente! Nuevo saldo: $${result.balance}`);
       setShowBalanceModal(false);
       setBalanceAmount('');
-      
-      // Actualizar lista de hijos
-      const childrenData = await parentAPI.getMyChildren();
-      if (childrenData.success) {
-        setChildren(childrenData.children || []);
-        // Mantener el mismo hijo seleccionado
-        const updatedChild = childrenData.children.find(c => c._id === selectedChild._id);
-        if (updatedChild) setSelectedChild(updatedChild);
+
+      // Actualizar datos locales
+      const userData = getStoredUser();
+      if (userData) {
+        if (selectedProfile.isParent) {
+          // Si es el padre, actualiza su propio saldo
+          userData.balance = result.balance;
+          localStorage.setItem('userData', JSON.stringify(userData));
+          setUser(userData);
+        } else {
+          // Si es un hijo, actualiza la lista de hijos en el dashboard
+          await loadDashboardData();
+        }
       }
     } else {
       alert(result.message || 'Error al recargar saldo');
     }
-    
-    setBalanceLoading(false);
-  };
+  } catch (error) {
+    console.error('Error en recarga:', error);
+    alert('Error en la recarga');
+  }
+
+  setBalanceLoading(false);
+};
+
 
   const handlePurchaseLunch = async () => {
-    if (!selectedChild || !selectedLunch) {
-      alert('Por favor selecciona un hijo y un almuerzo');
+    if (!selectedProfile || !selectedLunch) {
+      alert('Selecciona un perfil y un almuerzo');
       return;
     }
 
     setPurchaseLoading(true);
     const result = await api.makePurchase({
-      userId: selectedChild._id,
+      userId: selectedProfile._id,
       lunchId: selectedLunch.idMeal || selectedLunch._id,
       lunchName: selectedLunch.strMeal,
-      amount: 5, // Precio fijo por ejemplo
+      amount: 5,
       type: 'lunch_purchase',
-      purchasedByParent: true
+      purchasedByParent: !selectedProfile.isParent,
     });
-    
+
     if (result.success) {
-      alert(`¡Almuerzo comprado exitosamente para ${selectedChild.name}!`);
+      alert('¡Compra realizada exitosamente!');
       setShowLunchModal(false);
       setSelectedLunch(null);
-      
-      // Recargar compras del hijo
-      loadChildPurchases(selectedChild._id);
+      await loadPurchases(selectedProfile._id, selectedProfile.isParent);
     } else {
       alert(result.message || 'Error al comprar almuerzo');
     }
-    
+
     setPurchaseLoading(false);
   };
 
   const handleQuickAction = (action) => {
     switch (action) {
-      case 'link_child':
-        window.location.href = '/link-child';
-        break;
       case 'balance':
         setShowBalanceModal(true);
         break;
@@ -138,222 +166,173 @@ const DashboardParent = () => {
         break;
     }
   };
+const handleSearchChild = async () => {
+  if (!searchTerm.trim()) {
+    alert('Por favor ingresa un nombre o ID para buscar.');
+    return;
+  }
+
+  setSearchLoading(true);
+  setSearchResult(null);
+
+  try {
+    const result = await api.searchChild(searchTerm);
+
+    if (result.success && result.child) {
+      setSearchResult(result.child);
+      setSelectedProfile(result.child);
+      alert(` Hijo encontrado: ${result.child.name}`);
+    } else {
+      alert(' No se encontró ningún hijo con ese nombre o ID.');
+    }
+  } catch (error) {
+    console.error('Error al buscar hijo:', error);
+    alert('⚠️ Error al buscar hijo.');
+  }
+
+  setSearchLoading(false);
+};
+
 
   if (loading) {
     return (
-      <div style={{ 
-        padding: '2rem', 
-        textAlign: 'center',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '50vh'
-      }}>
-        <div>
-          <p style={{ fontSize: '1.2rem', color: '#6c757d' }}>Cargando dashboard...</p>
-        </div>
+      <div style={{ textAlign: 'center', padding: '2rem' }}>
+        <p>Cargando dashboard...</p>
       </div>
     );
   }
 
   return (
     <div className="dashboard" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-      
       {user && (
-        <div className="user-welcome">
-          <div style={{ 
-            background: 'linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)',
-            color: 'white',
-            padding: '2rem',
-            borderRadius: '16px',
-            marginBottom: '2rem'
-          }}>
-            <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem' }}>
-              ¡Bienvenido, {user.name}!
-            </h2>
-            <p style={{ margin: 0, opacity: 0.9 }}>
-              Panel de control para padres - Gestiona las cuentas de tus hijos
-            </p>
-          </div>
-
-          {/* Selector de Hijo */}
-          {children.length > 0 && (
-            <div style={{ 
-              background: 'white',
-              padding: '1.5rem',
-              borderRadius: '12px',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-              marginBottom: '2rem'
-            }}>
-              <h3 style={{ color: '#495057', marginBottom: '1rem' }}>👦 Hijo Seleccionado</h3>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-                {children.map(child => (
-                  <button
-                    key={child._id}
-                    onClick={() => setSelectedChild(child)}
-                    style={{
-                      padding: '1rem 1.5rem',
-                      background: selectedChild?._id === child._id ? '#28a745' : '#6c757d',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    {child.name} (${child.balance || 0})
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Estadísticas del Hijo Seleccionado */}
-          {selectedChild && (
-            <div className="child-stats" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '1.5rem',
-              marginBottom: '2rem'
-            }}>
-              <div className="stat-card" style={{
-                background: 'white',
-                padding: '1.5rem',
-                borderRadius: '12px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                textAlign: 'center'
-              }}>
-                <h3 style={{ color: '#6c757d', marginBottom: '1rem' }}>Saldo de {selectedChild.name}</h3>
-                <p style={{ fontSize: '2.5rem', fontWeight: 'bold', color: '#28a745' }}>
-                  ${selectedChild.balance || 0}
-                </p>
-              </div>
-
-              <div className="stat-card" style={{
-                background: 'white',
-                padding: '1.5rem',
-                borderRadius: '12px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                textAlign: 'center'
-              }}>
-                <h3 style={{ color: '#6c757d', marginBottom: '1rem' }}>ID Estudiante</h3>
-                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#495057' }}>
-                  {selectedChild.studentId || 'No asignado'}
-                </p>
-              </div>
-
-              <div className="stat-card" style={{
-                background: 'white',
-                padding: '1.5rem',
-                borderRadius: '12px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                textAlign: 'center'
-              }}>
-                <h3 style={{ color: '#6c757d', marginBottom: '1rem' }}>Estado</h3>
-                <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: selectedChild.isActive ? '#28a745' : '#dc3545' }}>
-                  {selectedChild.isActive ? 'Activo' : 'Inactivo'}
-                </p>
-              </div>
-            </div>
-          )}
+        <div style={headerCard}>
+          <h2>Bienvenido, {user.name}</h2>
+          <p style={{ opacity: 0.8 }}>Panel de control - Padre y gestión familiar</p>
         </div>
       )}
 
-      {/* Acciones Rápidas para Padres */}
-      <div style={{ 
-        background: 'white',
-        padding: '2rem',
-        borderRadius: '12px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-        marginBottom: '2rem'
-      }}>
-        <h2 style={{ color: '#495057', marginBottom: '1.5rem' }}>Acciones Rápidas</h2>
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-          gap: '1rem'
-        }}>
-          <button 
-            onClick={() => handleQuickAction('link_child')} 
-            style={quickButton('#007bff')}
-            disabled={!children.length}
+      {/* Selector de perfil */}
+      <div style={profileSelectorBox}>
+        <h3>Seleccionar Perfil</h3>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+          <button
+            onClick={() => setSelectedProfile({ ...user, isParent: true })}
+            style={profileButton(selectedProfile?.isParent ? '#007bff' : '#6c757d')}
           >
-            👥 Vincular Hijo
+            Mi Cuenta (${user.balance || 0})
           </button>
-          <button 
-            onClick={() => handleQuickAction('balance')} 
-            style={quickButton('#28a745')}
-            disabled={!selectedChild}
-          >
-            💰 Recargar Saldo
+          {children.map((child) => (
+            <button
+              key={child._id}
+              onClick={() => setSelectedProfile(child)}
+              style={profileButton(selectedProfile?._id === child._id ? '#28a745' : '#6c757d')}
+            >
+              {child.name} (${child.balance || 0})
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Estadísticas */}
+      {selectedProfile && (
+        <div style={statsGrid}>
+          <div style={statCard}>
+            <h3>Saldo actual</h3>
+            <p style={bigMoney}>${selectedProfile.balance || 0}</p>
+          </div>
+          <div style={statCard}>
+  <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+  <h3>🔗 Vincular hijo</h3>
+  <input
+    type="text"
+    placeholder="Nombre o ID del hijo"
+    value={searchTerm}
+    onChange={(e) => setSearchTerm(e.target.value)}
+    style={{ padding: '0.5rem', width: '200px', marginRight: '10px' }}
+  />
+  <button
+    onClick={async () => {
+      if (!searchTerm.trim()) {
+        alert('Por favor ingresa el nombre o ID del hijo');
+        return;
+      }
+
+      const res = await api.linkChild(searchTerm.trim());
+      if (res.success) {
+        alert(`✅ ${res.message}`);
+        setChildren((prev) => [...prev, res.child]); // actualiza la lista
+      } else {
+        alert(`❌ ${res.message || 'Error al vincular hijo'}`);
+      }
+
+      setSearchTerm('');
+    }}
+  >
+    Vincular
+  </button>
+</div>
+
+  <button
+    style={{
+      backgroundColor: '#007bff',
+      color: 'white',
+      padding: '0.5rem 1rem',
+      border: 'none',
+      borderRadius: '6px',
+      cursor: 'pointer',
+      fontWeight: 'bold',
+    }}
+    onClick={handleSearchChild}
+  >
+    Buscar
+  </button>
+</div>
+
+          <div style={statCard}>
+            <h3>Estado</h3>
+            <p style={{ color: '#28a745', fontWeight: 'bold' }}>Activo</p>
+          </div>
+        </div>
+      )}
+
+      {/* Acciones rápidas */}
+      <div style={actionsBox}>
+        <h2>Acciones Rápidas</h2>
+        <div style={quickGrid}>
+          <button onClick={() => handleQuickAction('balance')} style={quickButton('#ffc107')}>
+            Recargar Saldo
           </button>
-          <button 
-            onClick={() => handleQuickAction('buy_lunch')} 
-            style={quickButton('#ff6b6b')}
-            disabled={!selectedChild}
-          >
-            🍽️ Comprar Almuerzo
+          <button onClick={() => handleQuickAction('buy_lunch')} style={quickButton('#ff6b6b')}>
+            Comprar Almuerzo
           </button>
         </div>
       </div>
 
-      {/* Compras Recientes del Hijo */}
-      {selectedChild && (
-        <div style={{ 
-          background: 'white',
-          padding: '2rem',
-          borderRadius: '12px',
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          marginBottom: '2rem'
-        }}>
-          <h2 style={{ color: '#495057', marginBottom: '1.5rem' }}>
-            Compras Recientes de {selectedChild.name}
-          </h2>
-          {childPurchases.length > 0 ? (
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {childPurchases.map(purchase => (
-                <div key={purchase._id} style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '1rem',
-                  background: '#f8f9fa',
-                  borderRadius: '8px',
-                  border: '1px solid #e9ecef'
-                }}>
-                  <div>
-                    <strong>{new Date(purchase.createdAt).toLocaleDateString()}</strong>
-                    <span style={{
-                      marginLeft: '1rem',
-                      background: purchase.purchasedByParent ? '#28a745' : '#007bff',
-                      color: 'white',
-                      padding: '0.25rem 0.5rem',
-                      borderRadius: '12px',
-                      fontSize: '0.8rem'
-                    }}>
-                      {purchase.purchasedByParent ? 'Comprado por Padre' : 'Auto-compra'}
-                    </span>
-                    <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>
-                      {purchase.lunchName || purchase.type}
-                    </div>
-                  </div>
-                  <span style={{ color: '#28a745', fontWeight: 'bold' }}>
-                    ${purchase.totalAmount}
-                  </span>
+      {/* Historial */}
+      <div style={historyBox}>
+        <h2>Historial de Compras de {selectedProfile?.name}</h2>
+        {purchases.length > 0 ? (
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {purchases.map((p) => (
+              <div key={p._id} style={purchaseItem}>
+                <div>
+                  <strong>{new Date(p.createdAt).toLocaleDateString()}</strong> —{' '}
+                  {p.lunchName || p.type}
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ color: '#6c757d', textAlign: 'center' }}>No hay compras recientes</p>
-          )}
-        </div>
-      )}
+                <span style={{ color: '#28a745', fontWeight: 'bold' }}>${p.totalAmount}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ color: '#6c757d' }}>No hay compras recientes</p>
+        )}
+      </div>
 
-      {/* Modal de Recarga de Saldo */}
+      {/* Modal de Recarga */}
       {showBalanceModal && (
         <div style={modalOverlay}>
           <div style={modalBox}>
-            <h3>💰 Recargar Saldo a {selectedChild?.name}</h3>
+            <h3>Recargar Saldo para {selectedProfile?.name}</h3>
             <input
               type="number"
               value={balanceAmount}
@@ -361,7 +340,7 @@ const DashboardParent = () => {
               placeholder="Monto a recargar"
               style={inputStyle}
             />
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
+            <div style={modalActions}>
               <button onClick={() => setShowBalanceModal(false)} style={cancelButton}>
                 Cancelar
               </button>
@@ -373,43 +352,44 @@ const DashboardParent = () => {
         </div>
       )}
 
-      {/* Modal de Compra de Almuerzo */}
+      {/* Modal de Compra */}
       {showLunchModal && (
         <div style={modalOverlay}>
-          <div style={{...modalBox, maxWidth: '500px'}}>
-            <h3>🍽️ Comprar Almuerzo para {selectedChild?.name}</h3>
-            <p style={{ color: '#6c757d', marginBottom: '1rem' }}>
-              Saldo disponible: <strong>${selectedChild?.balance || 0}</strong>
-            </p>
-            
+          <div style={{ ...modalBox, maxWidth: '500px' }}>
+            <h3>Comprar Almuerzo para {selectedProfile?.name}</h3>
             <div style={{ maxHeight: '300px', overflowY: 'auto', marginBottom: '1rem' }}>
-              {availableLunches.map(lunch => (
+              {availableLunches.map((lunch) => (
                 <div
                   key={lunch.idMeal}
                   onClick={() => setSelectedLunch(lunch)}
                   style={{
                     padding: '1rem',
-                    background: selectedLunch?.idMeal === lunch.idMeal ? '#e3f2fd' : '#f8f9fa',
-                    border: selectedLunch?.idMeal === lunch.idMeal ? '2px solid #2196f3' : '1px solid #e9ecef',
+                    background:
+                      selectedLunch?.idMeal === lunch.idMeal ? '#e3f2fd' : '#f8f9fa',
+                    border:
+                      selectedLunch?.idMeal === lunch.idMeal
+                        ? '2px solid #2196f3'
+                        : '1px solid #e9ecef',
                     borderRadius: '8px',
                     marginBottom: '0.5rem',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
                   }}
                 >
                   <strong>{lunch.strMeal}</strong>
-                  <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>
-                    ${5} {/* Precio fijo */}
-                  </div>
+                  <div style={{ color: '#6c757d', fontSize: '0.9rem' }}>${5}</div>
                 </div>
               ))}
             </div>
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem' }}>
+            <div style={modalActions}>
               <button onClick={() => setShowLunchModal(false)} style={cancelButton}>
                 Cancelar
               </button>
-              <button onClick={handlePurchaseLunch} style={confirmButton} disabled={purchaseLoading || !selectedLunch}>
-                {purchaseLoading ? 'Procesando...' : 'Comprar Almuerzo'}
+              <button
+                onClick={handlePurchaseLunch}
+                style={confirmButton}
+                disabled={purchaseLoading || !selectedLunch}
+              >
+                {purchaseLoading ? 'Procesando...' : 'Comprar'}
               </button>
             </div>
           </div>
@@ -419,7 +399,64 @@ const DashboardParent = () => {
   );
 };
 
-// 🧩 Estilos reutilizables (los mismos que DashboardStudent)
+// === Estilos ===
+const headerCard = {
+  background: 'linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)',
+  color: 'white',
+  padding: '2rem',
+  borderRadius: '16px',
+  marginBottom: '2rem',
+};
+
+const profileSelectorBox = {
+  background: 'white',
+  padding: '1.5rem',
+  borderRadius: '12px',
+  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+  marginBottom: '2rem',
+};
+
+const profileButton = (color) => ({
+  padding: '1rem 1.5rem',
+  background: color,
+  color: 'white',
+  border: 'none',
+  borderRadius: '8px',
+  cursor: 'pointer',
+  fontWeight: 'bold',
+});
+
+const statsGrid = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+  gap: '1.5rem',
+  marginBottom: '2rem',
+};
+
+const statCard = {
+  background: 'white',
+  padding: '1.5rem',
+  borderRadius: '12px',
+  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+  textAlign: 'center',
+};
+
+const bigMoney = { fontSize: '2.5rem', color: '#28a745', fontWeight: 'bold' };
+
+const actionsBox = {
+  background: 'white',
+  padding: '2rem',
+  borderRadius: '12px',
+  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+  marginBottom: '2rem',
+};
+
+const quickGrid = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+  gap: '1rem',
+};
+
 const quickButton = (color) => ({
   padding: '1.5rem',
   background: color,
@@ -429,26 +466,45 @@ const quickButton = (color) => ({
   cursor: 'pointer',
   fontWeight: 'bold',
   fontSize: '1.1rem',
-  transition: 'transform 0.2s',
 });
+
+const historyBox = {
+  background: 'white',
+  padding: '2rem',
+  borderRadius: '12px',
+  boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+  marginBottom: '2rem',
+};
+
+const purchaseItem = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  padding: '1rem',
+  background: '#f8f9fa',
+  borderRadius: '8px',
+  border: '1px solid #e9ecef',
+};
 
 const modalOverlay = {
   position: 'fixed',
-  top: 0, left: 0, right: 0, bottom: 0,
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
   background: 'rgba(0,0,0,0.5)',
   display: 'flex',
   justifyContent: 'center',
   alignItems: 'center',
-  zIndex: 1000
+  zIndex: 1000,
 };
 
 const modalBox = {
   background: 'white',
   padding: '2rem',
   borderRadius: '12px',
-  boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
   width: '90%',
-  maxWidth: '400px'
+  maxWidth: '400px',
+  boxShadow: '0 10px 25px rgba(0,0,0,0.2)',
 };
 
 const inputStyle = {
@@ -456,7 +512,13 @@ const inputStyle = {
   padding: '0.75rem',
   border: '2px solid #e9ecef',
   borderRadius: '6px',
-  fontSize: '1rem'
+  fontSize: '1rem',
+};
+
+const modalActions = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  marginTop: '1rem',
 };
 
 const cancelButton = {
@@ -465,7 +527,7 @@ const cancelButton = {
   padding: '0.75rem 1.5rem',
   border: 'none',
   borderRadius: '6px',
-  cursor: 'pointer'
+  cursor: 'pointer',
 };
 
 const confirmButton = {
@@ -474,7 +536,7 @@ const confirmButton = {
   padding: '0.75rem 1.5rem',
   border: 'none',
   borderRadius: '6px',
-  cursor: 'pointer'
+  cursor: 'pointer',
 };
 
 export default DashboardParent;

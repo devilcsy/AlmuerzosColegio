@@ -130,9 +130,9 @@ export const getStoredUser = () => {
 export const getToken = () => {
   return localStorage.getItem('token');
 };
-// Funciones específicas para PADRES 👨‍👧
+
 export const parentAPI = {
-  // 🔗 Vincular hijo (padre escribe el ID del hijo)
+
   async linkChild(childId) {
     return await apiFetch('/users/link-child', {
       method: 'POST',
@@ -140,12 +140,12 @@ export const parentAPI = {
     });
   },
 
-  // 📋 Obtener lista de hijos vinculados
+
   async getMyChildren() {
     return await apiFetch('/users/my-children');
   },
 
-  // 💰 Recargar saldo de un hijo
+
   async rechargeChild(childId, amount) {
     return await apiFetch('/users/recharge-child', {
       method: 'POST',
@@ -153,7 +153,7 @@ export const parentAPI = {
     });
   },
 
-  // 🧾 Ver historial de compras de un hijo
+
   async getChildPurchases(childId) {
     return await apiFetch(`/purchases/child/${childId}`);
   }

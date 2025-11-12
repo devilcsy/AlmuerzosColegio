@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
   balance: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
   parent: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
-  children: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // 🔗 padre → hijos
+  children: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, {
   timestamps: true
 });

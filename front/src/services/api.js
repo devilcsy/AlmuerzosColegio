@@ -1,10 +1,10 @@
 
 const getApiBase = () => {
-  // Si estamos en Codespaces, usar la URL del puerto 5000
+  // en Codespaces, usar la URL del puerto 5000
   if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
     return 'https://solid-space-chainsaw-4j9wq5x447j9h5x6p-5000.app.github.dev/api';
   }
-  // Si estamos en desarrollo local
+  // desarrollo local
   return 'http://localhost:5001/api';
 };
 
@@ -136,21 +136,25 @@ const addUserBalance = async (userId, amount) => {
 
 // Funciones de padres
 const getMyChildren = async () => {
-  return await makeRequest('/users/my-children'); // GET hijos vinculados al padre
+  return await makeRequest('/users/my-children'); 
 };
 
-const linkChild = async (childStudentId) => {
+const linkChild = async (identifier) => {
   return await makeRequest('/users/link-child', {
     method: 'POST',
-    body: { studentId: childStudentId },
+    body: { identifier },
   });
 };
+
 
 const rechargeChild = async (childId, amount) => {
   return await makeRequest('/users/recharge-child', {
     method: 'POST',
     body: { childId, amount },
   });
+};
+const searchChild = async (query) => {
+  return await makeRequest(`/parents/search-child?query=${encodeURIComponent(query)}`);
 };
 
 // Añadir al export
@@ -171,6 +175,7 @@ const api = {
   getMyChildren,
   linkChild,
   rechargeChild,
+  searchChild,
 };
 
 

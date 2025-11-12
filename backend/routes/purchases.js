@@ -3,58 +3,75 @@ import express from 'express';
 import Purchase from '../models/Purchase.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
-import { authorize } from '../middleware/role.js'; // ✅ te faltaba importar esto
-import { getChildPurchases } from '../controllers/purchaseController.js';
+import { authorize } from '../middleware/role.js';
+import {
+  createPurchase,
+  getChildPurchases
+} from '../controllers/purchaseController.js';
 
-const router = express.Router(); // ✅ mover esto arriba
+const router = express.Router();
 
-// ✅ Ruta para que los padres vean las compras de sus hijos
+
+router.post('/', protect, createPurchase);
+
+
 router.get('/child/:childId', protect, authorize('PARENT'), getChildPurchases);
 
-// Crear compra
-router.post('/', protect, async (req, res) => {
-  try {
-    const { items, totalAmount, type } = req.body;
-    const user = await User.findById(req.user.id);
 
-    // Verificar saldo suficiente
-    if (user.balance < totalAmount) {
+router.post('/recharge-child', protect, authorize('PARENT'), async (req, res) => {
+  try {
+    const { childId, amount } = req.body;
+
+    if (!childId || !amount) {
       return res.status(400).json({
         success: false,
-        message: 'Saldo insuficiente'
+        message: 'Debe enviar childId y amount'
       });
     }
 
-    // Crear compra
-    const purchase = await Purchase.create({
-      user: req.user.id,
-      items,
-      totalAmount,
-      type
-    });
+    const parent = await User.findById(req.user._id);
+    if (!parent) {
+      return res.status(404).json({
+        success: false,
+        message: 'Padre no encontrado'
+      });
+    }
 
-    // Actualizar saldo del usuario
-    await User.findByIdAndUpdate(req.user.id, { $inc: { balance: -totalAmount } });
+    // Validar que el hijo pertenezca al padre
+    if (!parent.children.includes(childId)) {
+      return res.status(403).json({
+        success: false,
+        message: 'No puedes recargar saldo a este hijo'
+      });
+    }
 
-    // Obtener usuario actualizado
-    const updatedUser = await User.findById(req.user.id);
+    const child = await User.findById(childId);
+    if (!child) {
+      return res.status(404).json({
+        success: false,
+        message: 'Hijo no encontrado'
+      });
+    }
 
-    res.status(201).json({
+    // Aumentar saldo
+    child.balance += Number(amount);
+    await child.save();
+
+    res.json({
       success: true,
-      message: 'Compra realizada exitosamente',
-      purchase,
-      newBalance: updatedUser.balance
+      message: `Saldo recargado correctamente para ${child.name}`,
+      newBalance: child.balance
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error al realizar la compra',
+      message: 'Error al recargar saldo del hijo',
       error: error.message
     });
   }
 });
 
-// Obtener compras del usuario
+// 🧾 Obtener compras del usuario autenticado
 router.get('/my-purchases', protect, async (req, res) => {
   try {
     const purchases = await Purchase.find({ user: req.user.id })

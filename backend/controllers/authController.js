@@ -109,7 +109,7 @@ export const login = async (req, res) => {
   }
 };
 
-// Obtener usuario actual
+
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);

@@ -1,22 +1,20 @@
-
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 
-
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import purchaseRoutes from './routes/purchases.js';
 import adminRoutes from './routes/admin.js';
+import lunchRoutes from './routes/lunches.js'; 
+import parentRoutes from './routes/parents.js';
+
 
 dotenv.config();
-
-// Conectar a la base de datos
 connectDB();
 
 const app = express();
-
 
 app.use(cors({
   origin: true, 
@@ -25,7 +23,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-
 app.options('*', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -33,9 +30,8 @@ app.options('*', (req, res) => {
   res.status(200).send();
 });
 
-// Middlewares
+// Middleware
 app.use(express.json());
-
 
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
@@ -44,11 +40,13 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rutas
+// Rutas principales
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/lunches', lunchRoutes); 
+app.use('/api/parents', parentRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
@@ -71,7 +69,6 @@ const PORT = process.env.PORT || 5001;
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(` Server running on port ${PORT}`);
-  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`CORS enabled for all origins`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(` Backend URL: https://solid-space-chainsaw-4j9wq5x447j9h5x6p-5000.app.github.dev`);
 });

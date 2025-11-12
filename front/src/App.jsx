@@ -21,7 +21,7 @@ const DashboardWrapper = () => {
     case 'PARENT':
       return <DashboardParent />
     case 'ADMIN':
-      return <Admin /> // opcional si quieres que admin también vea dashboard
+      return <Admin /> 
     default:
       return <Dashboard />
   }
@@ -46,17 +46,17 @@ export default function App() {
 
           {/* Rutas específicas */}
           <Route path="/lunches" element={
-            <ProtectedRoute roles={['STUDENT','STAFF']}>
+            <ProtectedRoute roles={['STUDENT','STAFF','PARENT']}>
               <Lunches />
             </ProtectedRoute>
           } />
           <Route path="/purchases" element={
-            <ProtectedRoute roles={['STUDENT','STAFF']}>
+            <ProtectedRoute roles={['STUDENT','STAFF','PARENT']}>
               <Purchases />
             </ProtectedRoute>
           } />
           <Route path="/profile" element={
-            <ProtectedRoute roles={['STUDENT','STAFF']}>
+            <ProtectedRoute roles={['STUDENT','STAFF','PARENT']}>
               <Profile />
             </ProtectedRoute>
           } />
