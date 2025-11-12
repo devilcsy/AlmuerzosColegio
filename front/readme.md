@@ -30,6 +30,5 @@ npm run dev
   - `POST /api/purchase` -> `{ itemId, cartCode }`
   - `GET /api/users/:id` -> perfil de usuario
   - `GET /api/admin/users` -> lista de usuarios (admin)
-- Si prefieres que React se conecte directamente a Firebase (sin backend), puedo generar otra versión que use Firebase Web SDK, pero eso implica mover credenciales/seguridad.
 
-Si quieres, ajusto rutas, textos, o diseño según tu FXML concreto.
+

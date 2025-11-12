@@ -1,10 +1,15 @@
-// En el backend, actualizar routes/purchases.js
+// routes/purchases.js
 import express from 'express';
 import Purchase from '../models/Purchase.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
+import { authorize } from '../middleware/role.js'; // ✅ te faltaba importar esto
+import { getChildPurchases } from '../controllers/purchaseController.js';
 
-const router = express.Router();
+const router = express.Router(); // ✅ mover esto arriba
+
+// ✅ Ruta para que los padres vean las compras de sus hijos
+router.get('/child/:childId', protect, authorize('PARENT'), getChildPurchases);
 
 // Crear compra
 router.post('/', protect, async (req, res) => {
@@ -29,10 +34,7 @@ router.post('/', protect, async (req, res) => {
     });
 
     // Actualizar saldo del usuario
-    await User.findByIdAndUpdate(
-      req.user.id,
-      { $inc: { balance: -totalAmount } }
-    );
+    await User.findByIdAndUpdate(req.user.id, { $inc: { balance: -totalAmount } });
 
     // Obtener usuario actualizado
     const updatedUser = await User.findById(req.user.id);
@@ -66,7 +68,8 @@ router.get('/my-purchases', protect, async (req, res) => {
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: 'Error al obtener compras'
+      message: 'Error al obtener compras',
+      error: error.message
     });
   }
 });

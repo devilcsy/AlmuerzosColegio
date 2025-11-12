@@ -1,4 +1,4 @@
-
+//login.jsx//
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI, saveAuthData } from '../utils/auth';
@@ -22,21 +22,53 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
 
-    const result = await authAPI.login(formData.email, formData.password);
+  console.log('🔍 DEBUG Login - Iniciando login con:', formData.email);
+  const result = await authAPI.login(formData.email, formData.password);
+  
+  console.log('🔍 DEBUG Login - Respuesta completa:', result);
+  console.log('🔍 DEBUG Login - Keys de result:', Object.keys(result));
+  
+  if (result.success) {
+    // DEBUG: Verificar la estructura real
+    console.log('🔍 DEBUG Login - ¿Tiene result.data?:', !!result.data);
+    console.log('🔍 DEBUG Login - ¿Tiene result.token?:', !!result.token);
+    console.log('🔍 DEBUG Login - ¿Tiene result.user?:', !!result.user);
     
-    if (result.success) {
-      saveAuthData(result.token, result.user);
+    // CORRECCIÓN: Buscar token y usuario en diferentes ubicaciones posibles
+    const token = result.data?.token || result.token;
+    const user = result.data?.user || result.data || result.user;
+    
+    console.log('🔍 DEBUG Login - Token encontrado:', token);
+    console.log('🔍 DEBUG Login - Usuario encontrado:', user);
+    
+    if (token && user) {
+      // Asegurar que el rol esté en mayúsculas
+      if (user.role) {
+        user.role = user.role.toUpperCase();
+        console.log('🔍 DEBUG Login - Rol normalizado:', user.role);
+      }
+      
+      saveAuthData(token, user);
+      
+      // Verificar que se guardó correctamente
+      console.log('🔍 DEBUG Login - Token guardado:', localStorage.getItem('token'));
+      console.log('🔍 DEBUG Login - UserData guardado:', localStorage.getItem('userData'));
+      
       navigate('/dashboard');
     } else {
-      setError(result.message || 'Error al iniciar sesión');
+      console.error('❌ DEBUG Login - Faltan token o usuario');
+      setError('Error: No se recibieron datos de usuario');
     }
-    
-    setIsLoading(false);
-  };
+  } else {
+    setError(result.message || 'Error al iniciar sesión');
+  }
+  
+  setIsLoading(false);
+};
 
   return (
     <div style={styles.loginContainer}>

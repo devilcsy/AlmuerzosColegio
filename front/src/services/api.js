@@ -1,6 +1,4 @@
-// services/api.js
 
-// Configuración dinámica para API - VERSIÓN CODESPACES
 const getApiBase = () => {
   // Si estamos en Codespaces, usar la URL del puerto 5000
   if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
@@ -48,8 +46,7 @@ const makeRequest = async (endpoint, options = {}) => {
   }
 };
 
-// [MANTÉN TODAS LAS DEMÁS FUNCIONES IGUAL]
-// Funciones para almuerzos
+
 const getLunches = async () => {
   return await makeRequest('/lunches');
 };
@@ -137,7 +134,26 @@ const addUserBalance = async (userId, amount) => {
   });
 };
 
-// Exportar todas las funciones como objeto api
+// Funciones de padres
+const getMyChildren = async () => {
+  return await makeRequest('/users/my-children'); // GET hijos vinculados al padre
+};
+
+const linkChild = async (childStudentId) => {
+  return await makeRequest('/users/link-child', {
+    method: 'POST',
+    body: { studentId: childStudentId },
+  });
+};
+
+const rechargeChild = async (childId, amount) => {
+  return await makeRequest('/users/recharge-child', {
+    method: 'POST',
+    body: { childId, amount },
+  });
+};
+
+// Añadir al export
 const api = {
   getLunches,
   addLunch,
@@ -151,8 +167,12 @@ const api = {
   getAdminStats,
   getAllUsers,
   updateUser,
-  addUserBalance
+  addUserBalance,
+  getMyChildren,
+  linkChild,
+  rechargeChild,
 };
+
 
 // Exportar por defecto el objeto api
 export default api;

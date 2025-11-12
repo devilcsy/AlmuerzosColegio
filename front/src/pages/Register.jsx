@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI, saveAuthData } from '../utils/auth';
@@ -23,7 +22,6 @@ const Register = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Limpiar errores cuando el usuario empiece a escribir
     if (error) setError('');
   };
 
@@ -33,7 +31,6 @@ const Register = () => {
     setError('');
     setSuccess('');
 
-    // Validaciones
     if (formData.password !== formData.confirmPassword) {
       setError('Las contraseñas no coinciden');
       setIsLoading(false);
@@ -46,27 +43,19 @@ const Register = () => {
       return;
     }
 
-    // Preparar datos para enviar (sin confirmPassword)
     const { confirmPassword, ...userData } = formData;
 
     try {
       const result = await authAPI.register(userData);
-      
       if (result.success) {
         setSuccess('¡Usuario registrado exitosamente! Redirigiendo...');
-        
-        // Auto-login después del registro
+
         const loginResult = await authAPI.login(userData.email, userData.password);
-        
         if (loginResult.success) {
           saveAuthData(loginResult.token, loginResult.user);
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 2000);
+          setTimeout(() => navigate('/dashboard'), 2000);
         } else {
-          setTimeout(() => {
-            navigate('/login');
-          }, 2000);
+          setTimeout(() => navigate('/login'), 2000);
         }
       } else {
         setError(result.message || 'Error al registrar usuario');
@@ -74,7 +63,7 @@ const Register = () => {
     } catch (error) {
       setError('Error de conexión con el servidor');
     }
-    
+
     setIsLoading(false);
   };
 
@@ -85,9 +74,8 @@ const Register = () => {
         <div style={styles.floatingCircle2}></div>
         <div style={styles.floatingCircle3}></div>
       </div>
-      
+
       <div style={styles.registerCard}>
-        {/* Logo y título */}
         <div style={styles.header}>
           <div style={styles.logo}>
             <span style={styles.logoIcon}>🍽️</span>
@@ -96,7 +84,6 @@ const Register = () => {
           <p style={styles.subtitle}>Únete al sistema de almuerzos</p>
         </div>
 
-        {/* Formulario */}
         <form onSubmit={handleSubmit} style={styles.form}>
           {error && (
             <div style={styles.errorMessage}>
@@ -104,7 +91,6 @@ const Register = () => {
               {error}
             </div>
           )}
-          
           {success && (
             <div style={styles.successMessage}>
               <span style={styles.successIcon}>✅</span>
@@ -128,7 +114,7 @@ const Register = () => {
                 />
               </label>
             </div>
-            
+
             <div style={styles.inputGroup}>
               <label style={styles.label}>
                 <span style={styles.labelText}>Email</span>
@@ -162,7 +148,7 @@ const Register = () => {
                 />
               </label>
             </div>
-            
+
             <div style={styles.inputGroup}>
               <label style={styles.label}>
                 <span style={styles.labelText}>Confirmar Contraseña</span>
@@ -180,6 +166,7 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Cambiamos STAFF -> PARENT */}
           <div style={styles.twoColumns}>
             <div style={styles.inputGroup}>
               <label style={styles.label}>
@@ -192,12 +179,12 @@ const Register = () => {
                   style={styles.select}
                 >
                   <option value="STUDENT">Estudiante</option>
-                  <option value="STAFF">Personal</option>
+                  <option value="PARENT">Padre</option>
                   <option value="ADMIN">Administrador</option>
                 </select>
               </label>
             </div>
-            
+
             {formData.role === 'STUDENT' && (
               <div style={styles.inputGroup}>
                 <label style={styles.label}>
@@ -230,9 +217,9 @@ const Register = () => {
               />
             </label>
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             disabled={isLoading}
             style={isLoading ? styles.buttonLoading : styles.button}
           >
@@ -247,30 +234,13 @@ const Register = () => {
           </button>
         </form>
 
-        {/* Enlace de login */}
         <div style={styles.footer}>
           <p style={styles.loginText}>
-            ¿Ya tienes una cuenta? 
+            ¿Ya tienes una cuenta?
             <Link to="/login" style={styles.loginLink}>
               Inicia sesión aquí
             </Link>
           </p>
-        </div>
-
-        {/* Información adicional */}
-        <div style={styles.infoSection}>
-          <div style={styles.infoItem}>
-            <span style={styles.infoIcon}>🔒</span>
-            <span>Seguro</span>
-          </div>
-          <div style={styles.infoItem}>
-            <span style={styles.infoIcon}>⚡</span>
-            <span>Rápido</span>
-          </div>
-          <div style={styles.infoItem}>
-            <span style={styles.infoIcon}>🎯</span>
-            <span>Fácil</span>
-          </div>
         </div>
       </div>
     </div>

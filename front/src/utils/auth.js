@@ -33,7 +33,7 @@ export const apiFetch = async (endpoint, options = {}) => {
     const response = await fetch(`${API_URL}${endpoint}`, config);
     return await response.json();
   } catch (error) {
-    console.error('❌ Auth fetch error:', error);
+    console.error(' Auth fetch error:', error);
     return { 
       success: false, 
       message: 'Error de conexión con el servidor' 
@@ -41,14 +41,13 @@ export const apiFetch = async (endpoint, options = {}) => {
   }
 };
 
-// [MANTÉN TODO EL RESTO DEL CÓDIGO IGUAL]
-// Alias para compatibilidad - getUser es igual a getStoredUser
+
 export const getUser = () => {
   const userData = localStorage.getItem('userData');
   return userData ? JSON.parse(userData) : null;
 };
 
-// Funciones de autenticación
+
 export const authAPI = {
   async login(email, password) {
     return await apiFetch('/auth/login', {
@@ -131,6 +130,34 @@ export const getStoredUser = () => {
 export const getToken = () => {
   return localStorage.getItem('token');
 };
+// Funciones específicas para PADRES 👨‍👧
+export const parentAPI = {
+  // 🔗 Vincular hijo (padre escribe el ID del hijo)
+  async linkChild(childId) {
+    return await apiFetch('/users/link-child', {
+      method: 'POST',
+      body: { childId }
+    });
+  },
+
+  // 📋 Obtener lista de hijos vinculados
+  async getMyChildren() {
+    return await apiFetch('/users/my-children');
+  },
+
+  // 💰 Recargar saldo de un hijo
+  async rechargeChild(childId, amount) {
+    return await apiFetch('/users/recharge-child', {
+      method: 'POST',
+      body: { childId, amount }
+    });
+  },
+
+  // 🧾 Ver historial de compras de un hijo
+  async getChildPurchases(childId) {
+    return await apiFetch(`/purchases/child/${childId}`);
+  }
+};
 
 // Exportaciones para compatibilidad con componentes existentes
 export default {
@@ -142,5 +169,6 @@ export default {
   clearAuthData,
   authAPI,
   userAPI,
-  purchasesAPI
+  purchasesAPI,
+  parentAPI 
 };

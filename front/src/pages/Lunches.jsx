@@ -11,7 +11,7 @@ export default function Lunches(){
   const [selectedCategory, setSelectedCategory] = useState('chicken')
   const user = getStoredUser()
 
-  // Cargar almuerzos del backend
+
   useEffect(() => {
     const loadLunches = async () => {
       try {
@@ -24,7 +24,7 @@ export default function Lunches(){
     loadLunches()
   }, [])
 
-  // Cargar almuerzos disponibles de la API externa
+  
   useEffect(() => {
     const loadAvailableLunches = async () => {
       setLoading(true)

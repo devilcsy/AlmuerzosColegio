@@ -4,13 +4,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 
-// Importar rutas
+
 import authRoutes from './routes/auth.js';
 import userRoutes from './routes/users.js';
 import purchaseRoutes from './routes/purchases.js';
 import adminRoutes from './routes/admin.js';
 
-// Configurar dotenv
 dotenv.config();
 
 // Conectar a la base de datos
@@ -20,7 +19,7 @@ const app = express();
 
 
 app.use(cors({
-  origin: true, // Acepta cualquier origen
+  origin: true, 
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
