@@ -17,13 +17,12 @@ router.get('/search-child', protect, authorize('PARENT'), async (req, res) => {
       });
     }
 
-    // Buscar por studentId o name (ignorando mayúsculas/minúsculas)
     const child = await User.findOne({
       $or: [
         { studentId: query },
         { name: { $regex: new RegExp(`^${query}$`, 'i') } }
       ]
-    }).select('-password'); // no devolver password
+    }).select('-password'); 
 
     if (!child) {
       return res.status(404).json({

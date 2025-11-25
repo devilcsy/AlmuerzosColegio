@@ -1,19 +1,15 @@
 
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-
-// Crear token JWT
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'fallback_secret', {
     expiresIn: process.env.JWT_EXPIRES_IN || '30d'
   });
 };
-
 // Registro
 export const register = async (req, res) => {
   try {
     const { name, email, password, role, studentId, department } = req.body;
-
     // Verificar si el usuario ya existe
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -22,11 +18,9 @@ export const register = async (req, res) => {
         message: 'Ya existe un usuario con este correo electrónico'
       });
     }
-
     // Validar rol permitido
     const validRoles = ['STUDENT', 'PARENT', 'ADMIN'];
     const userRole = validRoles.includes(role) ? role : 'STUDENT';
-
     // Crear usuario
     const user = await User.create({
       name,
@@ -36,10 +30,8 @@ export const register = async (req, res) => {
       studentId,
       department
     });
-
     // Generar token
     const token = signToken(user._id);
-
     res.status(201).json({
       success: true,
       message: 'Usuario registrado correctamente',
@@ -62,7 +54,6 @@ export const register = async (req, res) => {
     });
   }
 };
-
 // Login
 export const login = async (req, res) => {
   try {
@@ -82,10 +73,8 @@ export const login = async (req, res) => {
         message: 'La cuenta está desactivada'
       });
     }
-
     // Generar token
     const token = signToken(user._id);
-
     res.json({
       success: true,
       message: 'Inicio de sesión exitoso',
@@ -108,8 +97,6 @@ export const login = async (req, res) => {
     });
   }
 };
-
-
 export const getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);

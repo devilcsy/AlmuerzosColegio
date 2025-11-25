@@ -6,7 +6,11 @@ import Lunch from '../models/Lunch.js';
 // Crear una compra (para usuario o hijo)
 export const createPurchase = async (req, res) => {
   try {
+    console.log('🛒 BODY recibido:', req.body);
+    console.log('👤 USER autenticado:', req.user);
+    
     const { items, totalAmount, type, childId } = req.body;
+  
 
     // Verificar quién realiza la compra
     const buyer = await User.findById(req.user.id);

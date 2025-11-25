@@ -179,7 +179,7 @@ export const rechargeChild = async (req, res) => {
     res.json({
       success: true,
       message: `Saldo recargado correctamente al hijo ${child.name}`,
-      balance: child.balance, // 🔥 devuelve balance actualizado
+      balance: child.balance, 
       child: {
         _id: child._id,
         name: child.name,

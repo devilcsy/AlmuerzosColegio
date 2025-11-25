@@ -5,15 +5,13 @@ import User from '../models/User.js';
 export const protect = async (req, res, next) => {
   try {
     let token;
-
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
     }
-
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'No token provided, access denied'
+        message: 'No hay token, acceso denegado'
       });
     }
 
@@ -22,7 +20,7 @@ export const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
-        return res.status(401).json({ success: false, message: 'User not found' });
+        return res.status(401).json({ success: false, message: 'Usuario no encontrado' });
       }
 
 
@@ -37,14 +35,14 @@ export const protect = async (req, res, next) => {
       console.error(' Error verificando token:', error.message);
       return res.status(401).json({
         success: false,
-        message: 'Token is not valid'
+        message: 'Token no es valido'
       });
     }
   } catch (error) {
     console.error(' Error general en protect:', error.message);
     res.status(500).json({
       success: false,
-      message: 'Server error in authentication'
+      message: 'Server error en autenticacion'
     });
   }
 };

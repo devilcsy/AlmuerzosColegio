@@ -4,10 +4,7 @@ import Purchase from '../models/Purchase.js';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
 import { authorize } from '../middleware/role.js';
-import {
-  createPurchase,
-  getChildPurchases
-} from '../controllers/purchaseController.js';
+import {createPurchase,getChildPurchases} from '../controllers/purchaseController.js';
 
 const router = express.Router();
 
@@ -71,7 +68,7 @@ router.post('/recharge-child', protect, authorize('PARENT'), async (req, res) =>
   }
 });
 
-// 🧾 Obtener compras del usuario autenticado
+
 router.get('/my-purchases', protect, async (req, res) => {
   try {
     const purchases = await Purchase.find({ user: req.user.id })

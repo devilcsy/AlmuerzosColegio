@@ -15,7 +15,7 @@
     "mongodb",
     "jwt"
   ],
-  "author": "Tu Nombre",
+  "author": "Andres",
   "license": "MIT",
   "dependencies": {
     "bcryptjs": "^2.4.3",
