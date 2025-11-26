@@ -1,11 +1,12 @@
+// utils/auth.js
 const getApiBase = () => {
-
   return 'https://almuerzoscolegio-1.onrender.com/api';
 };
 
-const API_BASE = getApiBase();
+const API_BASE = getApiBase(); // Esta línea está bien
 
-console.log(' Auth.js using API URL:', API_URL);
+
+console.log(' Auth.js using API URL:', API_BASE); 
 
 // Función principal para fetch
 export const apiFetch = async (endpoint, options = {}) => {
@@ -25,8 +26,8 @@ export const apiFetch = async (endpoint, options = {}) => {
   }
 
   try {
-    console.log(' Auth fetch to:', `${API_URL}${endpoint}`);
-    const response = await fetch(`${API_URL}${endpoint}`, config);
+    console.log(' Auth fetch to:', `${API_BASE}${endpoint}`); // Cambiado API_URL por API_BASE
+    const response = await fetch(`${API_BASE}${endpoint}`, config); // Cambiado API_URL por API_BASE
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -42,12 +43,10 @@ export const apiFetch = async (endpoint, options = {}) => {
   }
 };
 
-
 export const getUser = () => {
   const userData = localStorage.getItem('userData');
   return userData ? JSON.parse(userData) : null;
 };
-
 
 export const authAPI = {
   async login(email, password) {
@@ -133,7 +132,6 @@ export const getToken = () => {
 };
 
 export const parentAPI = {
-
   async linkChild(childId) {
     return await apiFetch('/users/link-child', {
       method: 'POST',
@@ -141,11 +139,9 @@ export const parentAPI = {
     });
   },
 
-
   async getMyChildren() {
     return await apiFetch('/users/my-children');
   },
-
 
   async rechargeChild(childId, amount) {
     return await apiFetch('/users/recharge-child', {
@@ -153,7 +149,6 @@ export const parentAPI = {
       body: { childId, amount }
     });
   },
-
 
   async getChildPurchases(childId) {
     return await apiFetch(`/purchases/child/${childId}`);
