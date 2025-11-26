@@ -7,9 +7,10 @@ import {
   getAllUsers,
   linkChild,
   getMyChildren,
-  rechargeChild
+  rechargeChild,
+   updateUser
 } from '../controllers/userController.js';
-
+import { updateUser } from '../controllers/userController.js';
 import { protect } from '../middleware/auth.js';
 import { authorize } from '../middleware/role.js';
 
@@ -24,7 +25,7 @@ router.post('/balance', addBalance);
 
 
 router.get('/all', authorize('ADMIN'), getAllUsers);
-
+router.put('/:id', authorize('ADMIN'), updateUser);
 
 router.post('/link-child', authorize('PARENT'), linkChild);
 router.get('/my-children', authorize('PARENT'), getMyChildren);

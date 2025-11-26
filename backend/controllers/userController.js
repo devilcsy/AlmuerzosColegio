@@ -91,6 +91,86 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
+// En userController.js - FUNCIÓN QUE SÍ MODIFICA MONGODB
+export const updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, role, studentId, department, balance } = req.body;
+
+    console.log('🔄 ADMIN Actualizando usuario en MongoDB:', id);
+    console.log('📝 Datos recibidos:', req.body);
+
+    // Validar que el ID es válido
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID de usuario inválido'
+      });
+    }
+
+    // Preparar datos para actualizar
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (email) updateData.email = email;
+    if (role) updateData.role = role;
+    if (studentId !== undefined) updateData.studentId = studentId;
+    if (department !== undefined) updateData.department = department;
+    if (balance !== undefined) updateData.balance = parseFloat(balance);
+
+    console.log('📦 Datos a actualizar en MongoDB:', updateData);
+
+    // ACTUALIZAR EN MONGODB - esto SÍ modifica la base de datos
+    const updatedUser = await User.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { 
+        new: true,        // Devuelve el documento actualizado
+        runValidators: true  // Ejecuta las validaciones del schema
+      }
+    ).select('-password'); // Excluir la contraseña
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'Usuario no encontrado en la base de datos'
+      });
+    }
+
+    console.log('✅ Usuario actualizado en MongoDB:', updatedUser);
+
+    res.json({
+      success: true,
+      message: 'Usuario actualizado exitosamente en la base de datos',
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.error('❌ Error actualizando usuario en MongoDB:', error);
+    
+    // Manejar errores de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        success: false,
+        message: 'Error de validación',
+        error: error.message
+      });
+    }
+
+    // Manejar errores de duplicado de email
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: 'El email ya está en uso por otro usuario'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Error del servidor al actualizar usuario',
+      error: error.message
+    });
+  }
+};
 // Vincular hijo al padre usando studentId o nombre
 export const linkChild = async (req, res) => {
   try {
