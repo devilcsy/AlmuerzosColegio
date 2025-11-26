@@ -1,14 +1,9 @@
-// utils/auth.js
 const getApiBase = () => {
-  // En Codespaces, usar el backend en Render
-  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
-    return 'https://almuerzoscolegio-1.onrender.com/api';
-  }
-  // desarrollo local
-  return 'http://localhost:5001/api';
+
+  return 'https://almuerzoscolegio-1.onrender.com/api';
 };
 
-const API_URL = getApiBase();
+const API_BASE = getApiBase();
 
 console.log(' Auth.js using API URL:', API_URL);
 
