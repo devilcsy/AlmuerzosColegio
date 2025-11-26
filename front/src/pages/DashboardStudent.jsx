@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { getStoredUser } from '../utils/auth';
 import api from '../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const DashboardStudent = () => {
   const [user, setUser] = useState(null);
@@ -11,7 +12,7 @@ const DashboardStudent = () => {
   const [balanceAmount, setBalanceAmount] = useState('');
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [backgroundImage, setBackgroundImage] = useState('');
-
+  const navigate = useNavigate();
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -70,10 +71,10 @@ const DashboardStudent = () => {
   const handleQuickAction = (action) => {
     switch (action) {
       case 'lunches':
-        window.location.href = '/lunches';
+         navigate('/lunches');
         break;
       case 'purchases':
-        window.location.href = '/purchases';
+        navigate('/purchases');
         break;
       case 'balance':
         setShowBalanceModal(true);
