@@ -75,7 +75,7 @@ export const addBalance = async (req, res) => {
 };
 
 
-// Admin functions
+// funciones del admin
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -91,82 +91,45 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
-// En userController.js - FUNCIÓN QUE SÍ MODIFICA MONGODB
+
+
 export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, role, studentId, department, balance } = req.body;
 
-    console.log('🔄 ADMIN Actualizando usuario en MongoDB:', id);
-    console.log('📝 Datos recibidos:', req.body);
+    console.log('🔄 ADMIN Actualizando usuario:', id);
 
-    // Validar que el ID es válido
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID de usuario inválido'
-      });
-    }
-
-    // Preparar datos para actualizar
-    const updateData = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
-    if (role) updateData.role = role;
-    if (studentId !== undefined) updateData.studentId = studentId;
-    if (department !== undefined) updateData.department = department;
-    if (balance !== undefined) updateData.balance = parseFloat(balance);
-
-    console.log('📦 Datos a actualizar en MongoDB:', updateData);
-
-    // ACTUALIZAR EN MONGODB - esto SÍ modifica la base de datos
     const updatedUser = await User.findByIdAndUpdate(
       id,
-      { $set: updateData },
       { 
-        new: true,        // Devuelve el documento actualizado
-        runValidators: true  // Ejecuta las validaciones del schema
-      }
-    ).select('-password'); // Excluir la contraseña
+        name, 
+        email, 
+        role, 
+        studentId, 
+        department, 
+        balance: parseFloat(balance) 
+      },
+      { new: true, runValidators: true }
+    ).select('-password');
 
     if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: 'Usuario no encontrado en la base de datos'
+        message: 'Usuario no encontrado'
       });
     }
-
-    console.log('✅ Usuario actualizado en MongoDB:', updatedUser);
 
     res.json({
       success: true,
-      message: 'Usuario actualizado exitosamente en la base de datos',
+      message: 'Usuario actualizado exitosamente',
       user: updatedUser
     });
-
   } catch (error) {
-    console.error('❌ Error actualizando usuario en MongoDB:', error);
-    
-    // Manejar errores de validación de Mongoose
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        success: false,
-        message: 'Error de validación',
-        error: error.message
-      });
-    }
-
-    // Manejar errores de duplicado de email
-    if (error.code === 11000) {
-      return res.status(400).json({
-        success: false,
-        message: 'El email ya está en uso por otro usuario'
-      });
-    }
-
+    console.error('Error actualizando usuario:', error);
     res.status(500).json({
       success: false,
-      message: 'Error del servidor al actualizar usuario',
+      message: 'Error al actualizar usuario',
       error: error.message
     });
   }

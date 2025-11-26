@@ -8,9 +8,9 @@ import {
   linkChild,
   getMyChildren,
   rechargeChild,
-   updateUser
+  updateUser
 } from '../controllers/userController.js';
-import { updateUser } from '../controllers/userController.js';
+
 import { protect } from '../middleware/auth.js';
 import { authorize } from '../middleware/role.js';
 
