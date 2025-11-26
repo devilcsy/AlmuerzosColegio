@@ -1,6 +1,5 @@
 // front/src/services/api.js
 const getApiBase = () => {
-
   return 'https://almuerzoscolegio-1.onrender.com/api';
 };
 
@@ -24,7 +23,7 @@ const makeRequest = async (endpoint, options = {}) => {
       config.body = JSON.stringify(config.body);
     }
 
-    console.log('🌐 Making request to:', `${API_BASE}${endpoint}`); // Para debug
+    console.log('🌐 Making request to:', `${API_BASE}${endpoint}`);
     
     const response = await fetch(`${API_BASE}${endpoint}`, config);
     
@@ -35,7 +34,7 @@ const makeRequest = async (endpoint, options = {}) => {
     
     return await response.json();
   } catch (error) {
-    console.error(' API Request error:', error);
+    console.error('API Request error:', error);
     return { 
       success: false, 
       message: error.message || 'Error de conexión con el servidor' 
@@ -77,6 +76,7 @@ const getLunchesByCategory = async (category = 'chicken') => {
   }
 };
 
+// Funciones para compras
 const makePurchase = async (purchaseData) => {
   return await makeRequest('/purchases', {
     method: 'POST',
@@ -115,7 +115,6 @@ const getAdminStats = async () => {
 const getAllUsers = async () => {
   return await makeRequest('/admin/users');
 };
-
 
 const updateUser = async (userId, userData) => {
   return await makeRequest(`/admin/users/${userId}`, {
@@ -184,6 +183,7 @@ const searchChild = async (query) => {
   return await makeRequest(`/parents/search-child?query=${encodeURIComponent(query)}`);
 };
 
+// Funciones de autenticación
 const login = async (email, password) => {
   return await makeRequest('/auth/login', {
     method: 'POST',
@@ -198,6 +198,7 @@ const register = async (userData) => {
   });
 };
 
+// Exportar como objeto único
 const api = {
   // Auth
   login,
@@ -237,31 +238,3 @@ const api = {
 };
 
 export default api;
-
-// Exportaciones individuales
-export {
-  login,
-  register,
-  getLunches,
-  addLunch,
-  getAvailableLunches,
-  getLunchesByCategory,
-  makePurchase,
-  getUserPurchases,
-  getAllPurchases,
-  addBalance,
-  updateProfile,
-  getAdminStats,
-  getAllUsers,
-  updateUser,          
-  addUserBalance,
-  linkParentChild,        
-  deleteUser,             
-  getUserProfile,        
-  updateUserRole,         
-  toggleUserStatus,       
-  getMyChildren,
-  linkChild,
-  rechargeChild,
-  searchChild,
-};
