@@ -1,16 +1,6 @@
 // front/src/services/api.js
 const getApiBase = () => {
 
-  if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
-    return 'https://almuerzoscolegio-1.onrender.com/api';
-  }
-  
-  // Si estamos en localhost, usar backend local
-  if (typeof window !== 'undefined' && window.location.hostname.includes('localhost')) {
-    return 'http://localhost:5001/api';
-  }
-  
-
   return 'https://almuerzoscolegio-1.onrender.com/api';
 };
 
