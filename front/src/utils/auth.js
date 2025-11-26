@@ -1,9 +1,10 @@
-
-// Configuración dinámica para API
+// utils/auth.js
 const getApiBase = () => {
+  // En Codespaces, usar el backend en Render
   if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
-    return 'https://solid-space-chainsaw-4j9wq5x447j9h5x6p-5000.app.github.dev/api';
+    return 'https://almuerzoscolegio-1.onrender.com/api';
   }
+  // desarrollo local
   return 'http://localhost:5001/api';
 };
 
@@ -29,8 +30,13 @@ export const apiFetch = async (endpoint, options = {}) => {
   }
 
   try {
-    console.log('🔗 Auth fetch to:', `${API_URL}${endpoint}`);
+    console.log(' Auth fetch to:', `${API_URL}${endpoint}`);
     const response = await fetch(`${API_URL}${endpoint}`, config);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     return await response.json();
   } catch (error) {
     console.error(' Auth fetch error:', error);

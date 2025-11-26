@@ -5,9 +5,9 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import DashboardParent from './pages/DashboardParent'
+import Admin from './pages/DashboardAdmin'
 import Purchases from './pages/Purchases'
 import Profile from './pages/Profile'
-import Admin from './pages/Admin'
 import Lunches from './pages/Lunches'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -35,7 +35,12 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          
+          <Route path="/register" element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+       <Register />
+     </ProtectedRoute>
+          } />
 
           {/* Dashboard común con redirección según rol */}
           <Route path="/dashboard" element={

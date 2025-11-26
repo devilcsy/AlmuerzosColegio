@@ -1,11 +1,17 @@
-
+// front/src/services/api.js
 const getApiBase = () => {
-  // en Codespaces, usar la URL del puerto 5000
-  if (typeof window !== 'undefined' && window.location.hostname.includes('app.github.dev')) {
-    return 'https://solid-space-chainsaw-4j9wq5x447j9h5x6p-5000.app.github.dev/api';
+
+  if (typeof window !== 'undefined' && window.location.hostname.includes('github.dev')) {
+    return 'https://almuerzoscolegio-1.onrender.com/api';
   }
-  // desarrollo local
-  return 'http://localhost:5001/api';
+  
+  // Si estamos en localhost, usar backend local
+  if (typeof window !== 'undefined' && window.location.hostname.includes('localhost')) {
+    return 'http://localhost:5001/api';
+  }
+  
+
+  return 'https://almuerzoscolegio-1.onrender.com/api';
 };
 
 const API_BASE = getApiBase();
@@ -28,25 +34,26 @@ const makeRequest = async (endpoint, options = {}) => {
       config.body = JSON.stringify(config.body);
     }
 
-    console.log('Making request to:', `${API_BASE}${endpoint}`); // Para debug
+    console.log('🌐 Making request to:', `${API_BASE}${endpoint}`); // Para debug
     
     const response = await fetch(`${API_BASE}${endpoint}`, config);
     
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => null);
+      throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
     }
     
     return await response.json();
   } catch (error) {
-    console.error('API Request error:', error);
+    console.error(' API Request error:', error);
     return { 
       success: false, 
-      message: 'Error de conexión con el servidor' 
+      message: error.message || 'Error de conexión con el servidor' 
     };
   }
 };
 
-
+// Funciones para almuerzos
 const getLunches = async () => {
   return await makeRequest('/lunches');
 };
@@ -80,7 +87,6 @@ const getLunchesByCategory = async (category = 'chicken') => {
   }
 };
 
-// Funciones para compras
 const makePurchase = async (purchaseData) => {
   return await makeRequest('/purchases', {
     method: 'POST',
@@ -120,6 +126,7 @@ const getAllUsers = async () => {
   return await makeRequest('/admin/users');
 };
 
+
 const updateUser = async (userId, userData) => {
   return await makeRequest(`/admin/users/${userId}`, {
     method: 'PUT',
@@ -134,56 +141,117 @@ const addUserBalance = async (userId, amount) => {
   });
 };
 
+const linkParentChild = async (parentId, childId) => {
+  return await makeRequest('/admin/link-parent-child', {
+    method: 'POST',
+    body: { parentId, childId }
+  });
+};
+
+const deleteUser = async (userId) => {
+  return await makeRequest(`/admin/users/${userId}`, {
+    method: 'DELETE'
+  });
+};
+
+const getUserProfile = async (userId) => {
+  return await makeRequest(`/admin/users/${userId}/profile`);
+};
+
+const updateUserRole = async (userId, newRole) => {
+  return await makeRequest(`/admin/users/${userId}/role`, {
+    method: 'PUT',
+    body: { role: newRole }
+  });
+};
+
+const toggleUserStatus = async (userId) => {
+  return await makeRequest(`/admin/users/${userId}/toggle-status`, {
+    method: 'PUT'
+  });
+};
+
 // Funciones de padres
 const getMyChildren = async () => {
-  return await makeRequest('/users/my-children'); 
+  return await makeRequest('/parents/my-children'); 
 };
 
 const linkChild = async (identifier) => {
-  return await makeRequest('/users/link-child', {
+  return await makeRequest('/parents/link-child', {
     method: 'POST',
     body: { identifier },
   });
 };
 
-
 const rechargeChild = async (childId, amount) => {
-  return await makeRequest('/users/recharge-child', {
+  return await makeRequest('/parents/recharge-child', {
     method: 'POST',
     body: { childId, amount },
   });
 };
+
 const searchChild = async (query) => {
   return await makeRequest(`/parents/search-child?query=${encodeURIComponent(query)}`);
 };
 
-// Añadir al export
+const login = async (email, password) => {
+  return await makeRequest('/auth/login', {
+    method: 'POST',
+    body: { email, password }
+  });
+};
+
+const register = async (userData) => {
+  return await makeRequest('/auth/register', {
+    method: 'POST',
+    body: userData
+  });
+};
+
 const api = {
+  // Auth
+  login,
+  register,
+  
+  // Lunches
   getLunches,
   addLunch,
   getAvailableLunches,
   getLunchesByCategory,
+  
+  // Purchases
   makePurchase,
   getUserPurchases,
   getAllPurchases,
+  
+  // Users
   addBalance,
   updateProfile,
+  
+  // Admin
   getAdminStats,
   getAllUsers,
-  updateUser,
+  updateUser,           
   addUserBalance,
+  linkParentChild,       
+  deleteUser,            
+  getUserProfile,      
+  updateUserRole,        
+  toggleUserStatus,       
+  
+  // Parents
   getMyChildren,
   linkChild,
   rechargeChild,
   searchChild,
 };
 
-
-// Exportar por defecto el objeto api
 export default api;
 
-// También exportar funciones individualmente para compatibilidad
+// Exportaciones individuales
 export {
+  login,
+  register,
   getLunches,
   addLunch,
   getAvailableLunches,
@@ -195,6 +263,15 @@ export {
   updateProfile,
   getAdminStats,
   getAllUsers,
-  updateUser,
-  addUserBalance
+  updateUser,          
+  addUserBalance,
+  linkParentChild,        
+  deleteUser,             
+  getUserProfile,        
+  updateUserRole,         
+  toggleUserStatus,       
+  getMyChildren,
+  linkChild,
+  rechargeChild,
+  searchChild,
 };

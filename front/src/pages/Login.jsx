@@ -1,5 +1,5 @@
 //login.jsx//
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { authAPI, saveAuthData } from '../utils/auth';
 
@@ -10,82 +10,106 @@ const Login = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lunches, setLunches] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
+
+  const getAvailableLunches = async () => {
+    try {
+      const response = await fetch('https://www.themealdb.com/api/json/v1/1/search.php?s=chicken');
+      const data = await response.json();
+      return data.meals || [];
+    } catch (error) {
+      console.error('Error fetching available lunches:', error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    const fetchLunches = async () => {
+      const meals = await getAvailableLunches();
+      setLunches(meals.slice(0, 6)); 
+    };
+    fetchLunches();
+  }, []);
+
+
+  useEffect(() => {
+    if (lunches.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentSlide((prev) => (prev + 1) % lunches.length);
+      }, 4000); 
+      return () => clearInterval(interval);
+    }
+  }, [lunches.length]);
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
-    // Limpiar error cuando el usuario empiece a escribir
     if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError('');
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
 
-  console.log('🔍 DEBUG Login - Iniciando login con:', formData.email);
-  const result = await authAPI.login(formData.email, formData.password);
-  
-  console.log('🔍 DEBUG Login - Respuesta completa:', result);
-  console.log('🔍 DEBUG Login - Keys de result:', Object.keys(result));
-  
-  if (result.success) {
-    // DEBUG: Verificar la estructura real
-    console.log('🔍 DEBUG Login - ¿Tiene result.data?:', !!result.data);
-    console.log('🔍 DEBUG Login - ¿Tiene result.token?:', !!result.token);
-    console.log('🔍 DEBUG Login - ¿Tiene result.user?:', !!result.user);
+    console.log('🔍 DEBUG Login - Iniciando login con:', formData.email);
+    const result = await authAPI.login(formData.email, formData.password);
     
-    // CORRECCIÓN: Buscar token y usuario en diferentes ubicaciones posibles
-    const token = result.data?.token || result.token;
-    const user = result.data?.user || result.data || result.user;
+    console.log('🔍 DEBUG Login - Respuesta completa:', result);
     
-    console.log('🔍 DEBUG Login - Token encontrado:', token);
-    console.log('🔍 DEBUG Login - Usuario encontrado:', user);
-    
-    if (token && user) {
-      // Asegurar que el rol esté en mayúsculas
-      if (user.role) {
-        user.role = user.role.toUpperCase();
-        console.log('🔍 DEBUG Login - Rol normalizado:', user.role);
-      }
+    if (result.success) {
+      const token = result.data?.token || result.token;
+      const user = result.data?.user || result.data || result.user;
       
-      saveAuthData(token, user);
+      console.log('🔍 DEBUG Login - Token encontrado:', token);
+      console.log('🔍 DEBUG Login - Usuario encontrado:', user);
       
-      // Verificar que se guardó correctamente
-      console.log('🔍 DEBUG Login - Token guardado:', localStorage.getItem('token'));
-      console.log('🔍 DEBUG Login - UserData guardado:', localStorage.getItem('userData'));
-      
-      navigate('/dashboard');
+      if (token && user) {
+        if (user.role) {
+          user.role = user.role.toUpperCase();
+          console.log('🔍 DEBUG Login - Rol normalizado:', user.role);
+        }
+        
+        saveAuthData(token, user);
+        
+        console.log('🔍 DEBUG Login - Token guardado:', localStorage.getItem('token'));
+        console.log('🔍 DEBUG Login - UserData guardado:', localStorage.getItem('userData'));
+        
+        if (user.role === 'ADMIN') {
+      navigate('/admin');
     } else {
-      console.error('❌ DEBUG Login - Faltan token o usuario');
-      setError('Error: No se recibieron datos de usuario');
+      navigate('/dashboard');
     }
-  } else {
-    setError(result.message || 'Error al iniciar sesión');
-  }
-  
-  setIsLoading(false);
-};
+      } else {
+        console.error('❌ DEBUG Login - Faltan token o usuario');
+        setError('Error: No se recibieron datos de usuario');
+      }
+    } else {
+      setError(result.message || 'Error al iniciar sesión');
+    }
+    
+    setIsLoading(false);
+  };
 
   return (
     <div style={styles.loginContainer}>
-      <div style={styles.backgroundAnimation}>
-        <div style={styles.floatingCircle1}></div>
-        <div style={styles.floatingCircle2}></div>
-        <div style={styles.floatingCircle3}></div>
-      </div>
-      
+      {/* Card principal */}
       <div style={styles.loginCard}>
-        {/* Logo y título */}
+        
+        {/* Header con logo */}
         <div style={styles.header}>
-          <div style={styles.logo}>
-            <span style={styles.logoIcon}>🍽️</span>
+          <div style={styles.logoContainer}>
+            <div style={styles.logoText}>
+              <span style={styles.logoTitle}>Lunch</span>
+              <span style={styles.logoSubtitle}>Manager</span>
+            </div>
           </div>
-          <h1 style={styles.title}>Sistema de Almuerzos</h1>
-          <p style={styles.subtitle}>Ingresa a tu cuenta</p>
+          <h1 style={styles.title}>Bienvenido</h1>
+          <p style={styles.subtitle}>Ingresa a tu cuenta para continuar</p>
         </div>
 
         {/* Formulario */}
@@ -99,34 +123,46 @@ const Login = () => {
           
           <div style={styles.inputGroup}>
             <label style={styles.label}>
-              <span style={styles.labelText}>Email</span>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
-                style={styles.input}
-                placeholder="tu@email.com"
-              />
+              <span style={styles.labelText}>Correo electrónico</span>
+              <div style={styles.inputContainer}>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={isLoading}
+                  style={styles.input}
+                  placeholder="ejemplo@institucion.edu"
+                />
+              </div>
             </label>
           </div>
           
           <div style={styles.inputGroup}>
             <label style={styles.label}>
               <span style={styles.labelText}>Contraseña</span>
-              <input
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                disabled={isLoading}
-                style={styles.input}
-                placeholder="••••••••"
-              />
+              <div style={styles.inputContainer}>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  disabled={isLoading}
+                  style={styles.input}
+                  placeholder="••••••••"
+                />
+              </div>
             </label>
+          </div>
+
+          <div style={styles.rememberForgot}>
+            <label style={styles.rememberMe}>
+              <input type="checkbox" style={styles.checkbox} />
+              <span style={styles.checkboxLabel}>Recordarme</span>
+            </label>
+            <a href="#" style={styles.forgotLink}>¿Olvidaste tu contraseña?</a>
           </div>
           
           <button 
@@ -145,130 +181,278 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Enlace de registro */}
-        <div style={styles.footer}>
-          <p style={styles.registerText}>
-            ¿No tienes una cuenta? 
-            <Link to="/register" style={styles.registerLink}>
-              Regístrate aquí
-            </Link>
-          </p>
+
+      </div>
+
+
+      <div style={styles.sidePanel}>
+        {/* Overlay oscuro para mejor contraste del texto */}
+        <div style={styles.overlay}></div>
+        
+        {/* Carrusel de imágenes */}
+        <div style={styles.carousel}>
+          {lunches.map((lunch, index) => (
+            <div
+              key={lunch.idMeal}
+              style={{
+                ...styles.carouselSlide,
+                opacity: index === currentSlide ? 1 : 0,
+                transform: `translateX(${(index - currentSlide) * 100}%)`
+              }}
+            >
+              <img 
+                src={lunch.strMealThumb} 
+                alt={lunch.strMeal}
+                style={styles.carouselImage}
+              />
+            </div>
+          ))}
         </div>
 
-        {/* Información adicional */}
-        <div style={styles.infoSection}>
-          <div style={styles.infoItem}>
-            <span style={styles.infoIcon}>👨‍🎓</span>
-            <span>Estudiantes</span>
+        {/* Contenido superpuesto */}
+        <div style={styles.sideContent}>
+          
+          {/* Logo principal */}
+          <div style={styles.mainLogo}>
+            <div style={styles.mainLogoText}>Sistema Almuerzos</div>
           </div>
-          <div style={styles.infoItem}>
-            <span style={styles.infoIcon}>👨‍🏫</span>
-            <span>Personal</span>
+
+          {/* Título principal */}
+          <h1 style={styles.heroTitle}>
+            El sistema hecho
+            <br />
+            a la medida para
+            <br />
+            <span style={styles.heroHighlight}>instituciones educativas</span>
+          </h1>
+
+          {/* Subtítulo */}
+          <p style={styles.heroSubtitle}>
+            Gestión de almuerzos escolares...
+            <br />
+            sin complicaciones ni costos adicionales.
+          </p>
+
+          {/* Características */}
+          <div style={styles.features}>
+            <div style={styles.feature}>
+              <span style={styles.featureText}>Reservas automáticas</span>
+            </div>
+            <div style={styles.feature}>
+              <span style={styles.featureText}>Pagos integrados</span>
+            </div>
+            <div style={styles.feature}>
+              <span style={styles.featureText}>Control nutricional</span>
+            </div>
           </div>
-          <div style={styles.infoItem}>
-            <span style={styles.infoIcon}>👑</span>
-            <span>Administradores</span>
-          </div>
+
+        </div>
+
+        {/* Indicadores del carrusel */}
+        <div style={styles.carouselIndicators}>
+          {lunches.map((_, index) => (
+            <button
+              key={index}
+              style={{
+                ...styles.indicator,
+                ...(index === currentSlide ? styles.indicatorActive : {})
+              }}
+              onClick={() => setCurrentSlide(index)}
+            />
+          ))}
         </div>
       </div>
     </div>
   );
 };
 
-// Estilos modernos
+// Estilos mejorados
 const styles = {
   loginContainer: {
     minHeight: '100vh',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: '#ffffff',
     display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: '1rem',
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     position: 'relative',
     overflow: 'hidden',
   },
-  backgroundAnimation: {
+  loginCard: {
+    flex: 1,
+    maxWidth: '480px',
+    background: 'white',
+    padding: '3rem 2.5rem',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    zIndex: 2,
+    borderRight: '1px solid #f1f3f4',
+  },
+  sidePanel: {
+    flex: 1,
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+    zIndex: 2,
+  },
+  overlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    overflow: 'hidden',
+    background: 'linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.4) 100%)',
     zIndex: 1,
   },
-  floatingCircle1: {
+  carousel: {
     position: 'absolute',
-    top: '10%',
-    left: '10%',
-    width: '100px',
-    height: '100px',
-    background: 'rgba(255,255,255,0.1)',
-    borderRadius: '50%',
-    animation: 'float 6s ease-in-out infinite',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 0,
   },
-  floatingCircle2: {
+  carouselSlide: {
     position: 'absolute',
-    top: '60%',
-    right: '10%',
-    width: '150px',
-    height: '150px',
-    background: 'rgba(255,255,255,0.05)',
-    borderRadius: '50%',
-    animation: 'float 8s ease-in-out infinite 1s',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    transition: 'all 0.8s ease-in-out',
   },
-  floatingCircle3: {
-    position: 'absolute',
-    bottom: '10%',
-    left: '20%',
-    width: '80px',
-    height: '80px',
-    background: 'rgba(255,255,255,0.08)',
-    borderRadius: '50%',
-    animation: 'float 7s ease-in-out infinite 0.5s',
-  },
-  loginCard: {
-    background: 'rgba(255, 255, 255, 0.95)',
-    backdropFilter: 'blur(20px)',
-    padding: '3rem',
-    borderRadius: '24px',
-    boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.2)',
+  carouselImage: {
     width: '100%',
-    maxWidth: '440px',
-    zIndex: 2,
-    position: 'relative',
+    height: '100%',
+    objectFit: 'cover',
   },
+  sideContent: {
+    maxWidth: '500px',
+    textAlign: 'left',
+    position: 'relative',
+    zIndex: 2,
+    padding: '2rem',
+  },
+  mainLogo: {
+    marginBottom: '3rem',
+  },
+  mainLogoText: {
+    fontSize: '1.8rem',
+    fontWeight: '700',
+    letterSpacing: '-0.02em',
+    color: 'white',
+  },
+  heroTitle: {
+    fontSize: '3rem',
+    fontWeight: '700',
+    lineHeight: 1.1,
+    margin: '0 0 1.5rem 0',
+    letterSpacing: '-0.03em',
+    color: 'white',
+    textShadow: '0 2px 4px rgba(210, 12, 12, 0.5)',
+  },
+  heroHighlight: {
+    background: 'linear-gradient(135deg, #ffffffff 0%, #ffffffff 100%)',
+    backgroundClip: 'text',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+    textShadow: 'none',
+  },
+  heroSubtitle: {
+    fontSize: '1.3rem',
+    lineHeight: 1.4,
+    margin: '0 0 3rem 0',
+    fontWeight: '300',
+    letterSpacing: '-0.01em',
+    color: 'rgba(255,255,255,0.9)',
+    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+  },
+  features: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  },
+  feature: {
+    padding: '0.75rem 0',
+    borderBottom: '1px solid rgba(255,255,255,0.2)',
+  },
+  featureText: {
+    fontSize: '1.1rem',
+    color: 'rgba(255,255,255,0.9)',
+    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+  },
+  carouselIndicators: {
+    position: 'absolute',
+    bottom: '2rem',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    display: 'flex',
+    gap: '0.5rem',
+    zIndex: 3,
+  },
+  indicator: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '50%',
+    border: 'none',
+    background: 'rgba(255,255,255,0.4)',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+  },
+  indicatorActive: {
+    background: 'white',
+    transform: 'scale(1.2)',
+  },
+  // Estilos del panel izquierdo
   header: {
     textAlign: 'center',
     marginBottom: '2.5rem',
   },
-  logo: {
-    marginBottom: '1.5rem',
+  logoContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: '2rem',
   },
-  logoIcon: {
-    fontSize: '4rem',
-    display: 'block',
+  logoText: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  logoTitle: {
+    fontSize: '2rem',
+    fontWeight: '800',
+    color: '#1e293b',
+    lineHeight: 1,
+    marginBottom: '0.25rem',
+  },
+  logoSubtitle: {
+    fontSize: '1rem',
+    fontWeight: '600',
+    color: '#667eea',
+    lineHeight: 1,
   },
   title: {
-    fontSize: '2.5rem',
-    fontWeight: 'bold',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-    backgroundClip: 'text',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    fontSize: '2rem',
+    fontWeight: '700',
+    color: '#1e293b',
     margin: '0 0 0.5rem 0',
+    letterSpacing: '-0.025em',
   },
   subtitle: {
-    color: '#6c757d',
-    fontSize: '1.1rem',
+    color: '#64748b',
+    fontSize: '1rem',
     margin: 0,
+    fontWeight: '400',
   },
   form: {
     marginBottom: '2rem',
   },
   errorMessage: {
-    background: 'rgba(220, 53, 69, 0.1)',
-    border: '1px solid rgba(220, 53, 69, 0.2)',
-    color: '#dc3545',
+    background: 'rgba(239, 68, 68, 0.05)',
+    border: '1px solid rgba(239, 68, 68, 0.2)',
+    color: '#073cc3ff',
     padding: '1rem',
     borderRadius: '12px',
     marginBottom: '1.5rem',
@@ -276,9 +460,10 @@ const styles = {
     alignItems: 'center',
     gap: '0.5rem',
     fontSize: '0.9rem',
+    fontWeight: '500',
   },
   errorIcon: {
-    fontSize: '1.2rem',
+    fontSize: '1.1rem',
   },
   inputGroup: {
     marginBottom: '1.5rem',
@@ -289,41 +474,78 @@ const styles = {
   labelText: {
     display: 'block',
     marginBottom: '0.5rem',
-    color: '#495057',
+    color: '#374151',
     fontWeight: '600',
     fontSize: '0.9rem',
+    letterSpacing: '0.025em',
+  },
+  inputContainer: {
+    position: 'relative',
   },
   input: {
     width: '100%',
-    padding: '1rem 1.25rem',
-    border: '2px solid #e9ecef',
+    padding: '1rem 1rem',
+    border: '2px solid #e5e7eb',
     borderRadius: '12px',
     fontSize: '1rem',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
     background: 'white',
     boxSizing: 'border-box',
+    color: '#1f2937',
+    fontWeight: '500',
+  },
+  rememberForgot: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '1.5rem',
+    fontSize: '0.9rem',
+  },
+  rememberMe: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    cursor: 'pointer',
+  },
+  checkbox: {
+    width: '16px',
+    height: '16px',
+    borderRadius: '4px',
+    border: '2px solid #d1d5db',
+    cursor: 'pointer',
+  },
+  checkboxLabel: {
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  forgotLink: {
+    color: '#667eea',
+    textDecoration: 'none',
+    fontWeight: '500',
+    transition: 'color 0.2s ease',
   },
   button: {
     width: '100%',
-    padding: '1rem 1.25rem',
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    padding: '1rem 1.5rem',
+    background: 'linear-gradient(135deg, #262fe5ff 0%, #882bf3ff 100%)',
     color: 'white',
     border: 'none',
     borderRadius: '12px',
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.3)',
+    letterSpacing: '0.025em',
   },
   buttonLoading: {
     width: '100%',
-    padding: '1rem 1.25rem',
-    background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
+    padding: '1rem 1.5rem',
+    background: 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)',
     color: 'white',
     border: 'none',
     borderRadius: '12px',
-    fontSize: '1.1rem',
+    fontSize: '1rem',
     fontWeight: '600',
     cursor: 'not-allowed',
     opacity: 0.8,
@@ -344,46 +566,23 @@ const styles = {
   },
   footer: {
     textAlign: 'center',
-    marginBottom: '2rem',
   },
   registerText: {
-    color: '#6c757d',
+    color: '#6b7280',
     margin: 0,
+    fontSize: '0.95rem',
   },
   registerLink: {
     color: '#667eea',
     textDecoration: 'none',
     fontWeight: '600',
     marginLeft: '0.5rem',
-    transition: 'color 0.3s ease',
-  },
-  infoSection: {
-    display: 'flex',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingTop: '2rem',
-    borderTop: '1px solid #e9ecef',
-  },
-  infoItem: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '0.5rem',
-    color: '#6c757d',
-    fontSize: '0.8rem',
-  },
-  infoIcon: {
-    fontSize: '1.5rem',
+    transition: 'color 0.2s ease',
   },
 };
 
-// Agregar estilos globales para las animaciones
+// Estilos globales
 const globalStyles = `
-  @keyframes float {
-    0%, 100% { transform: translateY(0px) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(5deg); }
-  }
-  
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
@@ -393,12 +592,12 @@ const globalStyles = `
     outline: none;
     border-color: #667eea !important;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
   
   button:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6) !important;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4) !important;
   }
   
   a:hover {

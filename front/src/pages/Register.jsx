@@ -1,6 +1,7 @@
+// pages/register.jsx
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { authAPI, saveAuthData } from '../utils/auth';
+import { useNavigate } from 'react-router-dom';
+import { authAPI } from '../utils/auth';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -48,15 +49,22 @@ const Register = () => {
     try {
       const result = await authAPI.register(userData);
       if (result.success) {
-        setSuccess('¡Usuario registrado exitosamente! Redirigiendo...');
+        setSuccess('¡Usuario registrado exitosamente!');
 
-        const loginResult = await authAPI.login(userData.email, userData.password);
-        if (loginResult.success) {
-          saveAuthData(loginResult.token, loginResult.user);
-          setTimeout(() => navigate('/dashboard'), 2000);
-        } else {
-          setTimeout(() => navigate('/login'), 2000);
-        }
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          role: 'STUDENT',
+          studentId: '',
+          department: ''
+        });
+
+        setTimeout(() => {
+ 
+        }, 3000);
+        
       } else {
         setError(result.message || 'Error al registrar usuario');
       }
@@ -78,10 +86,10 @@ const Register = () => {
       <div style={styles.registerCard}>
         <div style={styles.header}>
           <div style={styles.logo}>
-            <span style={styles.logoIcon}>🍽️</span>
+            <span style={styles.logoIcon}>👥</span>
           </div>
-          <h1 style={styles.title}>Crear Cuenta</h1>
-          <p style={styles.subtitle}>Únete al sistema de almuerzos</p>
+          <h1 style={styles.title}>Registrar Usuario</h1>
+          <p style={styles.subtitle}>Crear nueva cuenta en el sistema</p>
         </div>
 
         <form onSubmit={handleSubmit} style={styles.form}>
@@ -101,7 +109,7 @@ const Register = () => {
           <div style={styles.twoColumns}>
             <div style={styles.inputGroup}>
               <label style={styles.label}>
-                <span style={styles.labelText}>Nombre Completo</span>
+                <span style={styles.labelText}>Nombre Completo *</span>
                 <input
                   type="text"
                   name="name"
@@ -117,7 +125,7 @@ const Register = () => {
 
             <div style={styles.inputGroup}>
               <label style={styles.label}>
-                <span style={styles.labelText}>Email</span>
+                <span style={styles.labelText}>Email *</span>
                 <input
                   type="email"
                   name="email"
@@ -126,7 +134,7 @@ const Register = () => {
                   required
                   disabled={isLoading}
                   style={styles.input}
-                  placeholder="tu@email.com"
+                  placeholder="usuario@institucion.edu"
                 />
               </label>
             </div>
@@ -135,7 +143,7 @@ const Register = () => {
           <div style={styles.twoColumns}>
             <div style={styles.inputGroup}>
               <label style={styles.label}>
-                <span style={styles.labelText}>Contraseña</span>
+                <span style={styles.labelText}>Contraseña *</span>
                 <input
                   type="password"
                   name="password"
@@ -151,7 +159,7 @@ const Register = () => {
 
             <div style={styles.inputGroup}>
               <label style={styles.label}>
-                <span style={styles.labelText}>Confirmar Contraseña</span>
+                <span style={styles.labelText}>Confirmar Contraseña *</span>
                 <input
                   type="password"
                   name="confirmPassword"
@@ -166,11 +174,10 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Cambiamos STAFF -> PARENT */}
           <div style={styles.twoColumns}>
             <div style={styles.inputGroup}>
               <label style={styles.label}>
-                <span style={styles.labelText}>Tipo de Usuario</span>
+                <span style={styles.labelText}>Tipo de Usuario *</span>
                 <select
                   name="role"
                   value={formData.role}
@@ -179,7 +186,7 @@ const Register = () => {
                   style={styles.select}
                 >
                   <option value="STUDENT">Estudiante</option>
-                  <option value="PARENT">Padre</option>
+                  <option value="PARENT">Padre/Madre</option>
                   <option value="ADMIN">Administrador</option>
                 </select>
               </label>
@@ -226,28 +233,20 @@ const Register = () => {
             {isLoading ? (
               <div style={styles.loadingSpinner}>
                 <div style={styles.spinner}></div>
-                Creando cuenta...
+                Creando usuario...
               </div>
             ) : (
-              'Crear Cuenta'
+              'Crear Usuario'
             )}
           </button>
         </form>
 
-        <div style={styles.footer}>
-          <p style={styles.loginText}>
-            ¿Ya tienes una cuenta?
-            <Link to="/login" style={styles.loginLink}>
-              Inicia sesión aquí
-            </Link>
-          </p>
-        </div>
+      
       </div>
     </div>
   );
 };
 
-// Estilos (similar al Login pero adaptado)
 const styles = {
   registerContainer: {
     minHeight: '100vh',
@@ -450,10 +449,22 @@ const styles = {
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
   },
-  footer: {
+  ffooter: {
     textAlign: 'center',
-    marginBottom: '2rem',
+    marginTop: '2rem',
   },
+  backButton: {
+    background: 'transparent',
+    color: '#667eea',
+    border: '2px solid #667eea',
+    padding: '0.75rem 1.5rem',
+    borderRadius: '12px',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+  },
+
   loginText: {
     color: '#6c757d',
     margin: 0,

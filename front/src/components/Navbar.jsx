@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { getStoredUser, clearAuthData } from '../utils/auth';
@@ -17,34 +16,106 @@ const Navbar = () => {
     return location.pathname === path;
   };
 
+  
+  if (user?.role === 'ADMIN') {
   return (
     <nav style={styles.navbar}>
       <div style={styles.navContainer}>
         {/* Logo y marca */}
         <div style={styles.brand}>
-          <Link to="/dashboard" style={styles.brandLink}>
-            <span style={styles.logo}>🍽️</span>
-            <span style={styles.brandText}>Sistema Almuerzos</span>
+          <Link to="/admin" style={styles.brandLink}>
+            <span style={styles.logo}>👑</span>
+            <span style={styles.brandText}>Panel de Administración</span>
           </Link>
         </div>
 
-        {/* Navegación */}
+
         <div style={styles.navSection}>
-          {user ? (
-            <>
-              {/* Enlaces de navegación */}
-              <div style={styles.navLinks}>
-                <Link 
-                  to="/dashboard" 
-                  style={{
-                    ...styles.navLink,
-                    ...(isActiveLink('/dashboard') && styles.navLinkActive)
-                  }}
-                >
-                  <span style={styles.navIcon}>📊</span>
-                  Dashboard
-                </Link>
-                
+          <div style={styles.navLinks}>
+            <Link 
+              to="/admin" 
+              style={{
+                ...styles.navLink,
+                ...styles.adminLink,
+                ...(isActiveLink('/admin') && styles.navLinkActive)
+              }}
+            >
+              <span style={styles.navIcon}>📊</span>
+              Dashboard Admin
+            </Link>
+            
+      
+            <Link 
+              to="/register" 
+              style={{
+                ...styles.navLink,
+                ...styles.adminLink,
+                ...(isActiveLink('/register') && styles.navLinkActive)
+              }}
+            >
+              <span style={styles.navIcon}>👥</span>
+              Registrar Usuarios
+            </Link>
+          </div>
+
+          {/* Información del usuario */}
+          <div style={styles.userSection}>
+            <div style={styles.userInfo}>
+              <div style={styles.userWelcome}>
+                <span style={styles.userName}>Admin: {user.name}</span>
+                <div style={styles.userDetails}>
+                  <span style={styles.userRole}>ADMIN</span>
+                </div>
+              </div>
+            </div>
+            
+            <button 
+              onClick={handleLogout} 
+              style={styles.logoutButton}
+              title="Cerrar sesión"
+            >
+              <span style={styles.logoutIcon}>🚪</span>
+              Salir
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+  
+
+return (
+  <nav style={styles.navbar}>
+    <div style={styles.navContainer}>
+
+      <div style={styles.brand}>
+        <Link to="/login" style={styles.brandLink}>
+          <span style={styles.logo}>🍽️</span>
+          <span style={styles.brandText}>Sistema Almuerzos</span>
+        </Link>
+      </div>
+
+      {/* Navegación para usuarios no-admin */}
+      <div style={styles.navSection}>
+        {user ? (
+          <>
+            {/* Enlaces de navegación para usuarios autenticados */}
+            <div style={styles.navLinks}>
+              <Link 
+                to="/dashboard" 
+                style={{
+                  ...styles.navLink,
+                  ...(isActiveLink('/dashboard') && styles.navLinkActive)
+                }}
+              >
+                <span style={styles.navIcon}>📊</span>
+                Dashboard
+              </Link>
+              
+              
+              {user.role !== 'PARENT' && (
                 <Link 
                   to="/lunches" 
                   style={{
@@ -55,7 +126,10 @@ const Navbar = () => {
                   <span style={styles.navIcon}>🍽️</span>
                   Almuerzos
                 </Link>
-                
+              )}
+              
+             
+              {user.role !== 'PARENT' && (
                 <Link 
                   to="/purchases" 
                   style={{
@@ -66,94 +140,59 @@ const Navbar = () => {
                   <span style={styles.navIcon}>🛒</span>
                   Mis Compras
                 </Link>
-                
-                <Link 
-                  to="/profile" 
-                  style={{
-                    ...styles.navLink,
-                    ...(isActiveLink('/profile') && styles.navLinkActive)
-                  }}
-                >
-                  <span style={styles.navIcon}>👤</span>
-                  Perfil
-                </Link>
-                
-                {user.role === 'ADMIN' && (
-                  <Link 
-                    to="/admin" 
-                    style={{
-                      ...styles.navLink,
-                      ...styles.adminLink,
-                      ...(isActiveLink('/admin') && styles.navLinkActive)
-                    }}
-                  >
-                    <span style={styles.navIcon}>👑</span>
-                    Admin
-                  </Link>
-                )}
-              </div>
-
-              {/* Información del usuario */}
-              <div style={styles.userSection}>
-                <div style={styles.userInfo}>
-                  <div style={styles.userWelcome}>
-                    <span style={styles.userName}>Hola, {user.name}</span>
-                    <div style={styles.userDetails}>
-                      <span style={styles.userRole}>{user.role}</span>
-                      {user.balance !== undefined && (
-                        <span style={styles.userBalance}>
-                          ${user.balance}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <button 
-                  onClick={handleLogout} 
-                  style={styles.logoutButton}
-                  title="Cerrar sesión"
-                >
-                  <span style={styles.logoutIcon}>🚪</span>
-                  Salir
-                </button>
-              </div>
-            </>
-          ) : (
-            /* Enlaces para usuarios no autenticados */
-            <div style={styles.authLinks}>
+              )}
+              
               <Link 
-                to="/login" 
+                to="/profile" 
                 style={{
-                  ...styles.authLink,
-                  ...styles.loginLink,
-                  ...(isActiveLink('/login') && styles.authLinkActive)
+                  ...styles.navLink,
+                  ...(isActiveLink('/profile') && styles.navLinkActive)
                 }}
               >
-                Iniciar Sesión
-              </Link>
-              <Link 
-                to="/register" 
-                style={{
-                  ...styles.authLink,
-                  ...styles.registerLink,
-                  ...(isActiveLink('/register') && styles.authLinkActive)
-                }}
-              >
-                Registrarse
+                <span style={styles.navIcon}>👤</span>
+                Perfil
               </Link>
             </div>
-          )}
-        </div>
+
+            {/* Información del usuario */}
+            <div style={styles.userSection}>
+              <div style={styles.userInfo}>
+                <div style={styles.userWelcome}>
+                  <span style={styles.userName}>Hola, {user.name}</span>
+                  <div style={styles.userDetails}>
+                    <span style={styles.userRole}>{user.role}</span>
+                    {user.balance !== undefined && (
+                      <span style={styles.userBalance}>
+                        ${user.balance}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <button 
+                onClick={handleLogout} 
+                style={styles.logoutButton}
+                title="Cerrar sesión"
+              >
+                <span style={styles.logoutIcon}>🚪</span>
+                Salir
+              </button>
+            </div>
+          </>
+        ) : (
+          
+          <div></div>
+        )}
       </div>
-    </nav>
-  );
+    </div>
+  </nav>
+);
 };
 
-// Estilos modernos para el Navbar
 const styles = {
   navbar: {
-    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    background: 'linear-gradient(135deg, #3b32f9ff 0%, #160330ff 100%)',
     backdropFilter: 'blur(10px)',
     padding: '0',
     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
@@ -190,7 +229,7 @@ const styles = {
     filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
   },
   brandText: {
-    background: 'linear-gradient(135deg, #fff 0%, #e0e7ff 100%)',
+    background: 'linear-gradient(135deg, #ffffffff 0%, #e0e7ff 100%)',
     backgroundClip: 'text',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
@@ -309,13 +348,12 @@ const styles = {
     border: '2px solid transparent',
   },
   loginLink: {
-    background: 'transparent',
-    color: 'white',
-    border: '2px solid rgba(255, 255, 255, 0.3)',
+    background: 'rgba(255, 255, 255, 0.9)',
+    color: '#8b66eaff',
   },
   registerLink: {
     background: 'rgba(255, 255, 255, 0.9)',
-    color: '#667eea',
+    color: '#9b66eaff',
   },
   authLinkActive: {
     transform: 'translateY(-2px)',
@@ -323,7 +361,7 @@ const styles = {
   },
 };
 
-// Estilos globales para hover effects
+
 const globalNavStyles = `
   .nav-link:hover {
     background: rgba(255, 255, 255, 0.15) !important;
@@ -338,50 +376,15 @@ const globalNavStyles = `
   
   .auth-link:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(255, 255, 255, 0.2) !important;
+    boxShadow: 0 6px 20px rgba(255, 255, 255, 0.2) !important;
   }
   
   .brand-link:hover {
     transform: scale(1.05) !important;
   }
-  
-  /* Responsive */
-  @media (max-width: 968px) {
-    .nav-links {
-      gap: 0.25rem !important;
-    }
-    
-    .nav-link {
-      padding: 0.5rem 0.75rem !important;
-      font-size: 0.85rem !important;
-    }
-    
-    .user-details {
-      flex-direction: column !important;
-      gap: 0.25rem !important;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .nav-container {
-      padding: 0 0.5rem !important;
-    }
-    
-    .brand-text {
-      display: none !important;
-    }
-    
-    .nav-link span:last-child {
-      display: none !important;
-    }
-    
-    .user-name {
-      display: none !important;
-    }
-  }
 `;
 
-// Inyectar estilos globales
+
 const styleSheet = document.createElement('style');
 styleSheet.innerText = globalNavStyles;
 document.head.appendChild(styleSheet);
